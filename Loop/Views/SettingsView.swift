@@ -196,6 +196,10 @@ extension SettingsView {
         }
     }
     
+    private var isClosedLoopOn: Bool {
+        viewModel.isClosedLoopAllowed && viewModel.closedLoopPreference
+    }
+
     private var loopSection: some View {
         Section(header: SectionHeader(label: localizedAppNameAndVersion)) {
             Toggle(isOn: closedLoopToggleState) {
@@ -211,6 +215,39 @@ extension SettingsView {
                 .fixedSize(horizontal: false, vertical: true)
             }
             .disabled(!viewModel.isOnboardingComplete || !viewModel.isClosedLoopAllowed)
+
+            customLoopIntervalControls
+        }
+    }
+
+    @ViewBuilder
+    private var customLoopIntervalControls: some View {
+        Toggle(isOn: $viewModel.customLoopIntervalEnabled) {
+            Text("Custom Loop Interval", comment: "The title text for the custom loop interval switch cell")
+                .padding(.vertical, 3)
+        }
+        .disabled(!isClosedLoopOn)
+
+        if viewModel.customLoopIntervalEnabled {
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text("Loop Interval", comment: "The label for the custom loop interval picker")
+                    Spacer()
+                    Text(String(format: NSLocalizedString("%d min", comment: "Custom loop interval value in minutes (1: number of minutes)"), Int(viewModel.customLoopIntervalMinutes.rounded())))
+                        .foregroundColor(.secondary)
+                }
+                Picker("", selection: $viewModel.customLoopIntervalMinutes) {
+                    ForEach(Int(viewModel.minimumCustomLoopIntervalMinutes)...Int(viewModel.maximumCustomLoopIntervalMinutes), id: \.self) { minute in
+                        Text(String(format: NSLocalizedString("%d min", comment: "Custom loop interval value in minutes (1: number of minutes)"), minute))
+                            .tag(Double(minute))
+                    }
+                }
+                .pickerStyle(.wheel)
+                .labelsHidden()
+                DescriptiveText(label: NSLocalizedString("Loop will run at this interval to reduce pump communication and conserve pump battery. Between loops, insulin delivery reverts to your scheduled basal rate.", comment: "Descriptive text for the custom loop interval picker"))
+            }
+            .padding(.vertical, 3)
+            .disabled(!isClosedLoopOn)
         }
     }
     

@@ -1637,6 +1637,8 @@ final class StatusTableViewController: LoopChartsTableViewController {
                                           initialDosingEnabled: deviceManager.loopManager.settings.dosingEnabled,
                                           isClosedLoopAllowed: automaticDosingStatus.$isAutomaticDosingAllowed,
                                           automaticDosingStrategy: deviceManager.loopManager.settings.automaticDosingStrategy,
+                                          initialCustomLoopIntervalEnabled: deviceManager.loopManager.settings.customLoopIntervalEnabled,
+                                          initialCustomLoopIntervalMinutes: deviceManager.loopManager.settings.customLoopInterval.minutes,
                                           availableSupports: supportManager.availableSupports,
                                           isOnboardingComplete: onboardingManager.isComplete,
                                           therapySettingsViewModelDelegate: deviceManager,
@@ -2223,6 +2225,18 @@ extension StatusTableViewController: SettingsViewModelDelegate {
     func dosingStrategyChanged(_ strategy: AutomaticDosingStrategy) {
         self.deviceManager.loopManager.mutateSettings { settings in
             settings.automaticDosingStrategy = strategy
+        }
+    }
+
+    func customLoopIntervalEnabledChanged(_ enabled: Bool) {
+        deviceManager.loopManager.mutateSettings { settings in
+            settings.customLoopIntervalEnabled = enabled
+        }
+    }
+
+    func customLoopIntervalChanged(_ interval: TimeInterval) {
+        deviceManager.loopManager.mutateSettings { settings in
+            settings.customLoopInterval = min(max(interval, LoopSettings.minimumCustomLoopInterval), LoopSettings.maximumCustomLoopInterval)
         }
     }
 

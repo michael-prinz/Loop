@@ -61,19 +61,26 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
         }
     }
 
+    // Full display size of the graphic rectangular complication (graph + text bar).
+    var rectangularComplicationSize: CGSize {
+        switch WKInterfaceDevice.current().screenBounds.width {
+        case let x where x > 180:  // 44mm
+            return CGSize(width: 171.0, height: 76.0)
+        default: // 40mm
+            return CGSize(width: 150.0, height: 66.0)
+        }
+    }
+
     func makeChart() -> UIImage? {
         // c.f. https://developer.apple.com/design/human-interface-guidelines/watchos/icons-and-images/complication-images/
-        let size: CGSize = {
-            switch WKInterfaceDevice.current().screenBounds.width {
-            case let x where x > 180:  // 44mm
-                return CGSize(width: 171.0, height: 54.0)
-            default: // 40mm
-                return CGSize(width: 150.0, height: 47.0)
-            }
-        }()
-
+        // Render the graph to occupy the left portion of the complication; the text bar fills the rest.
+        let fullSize = rectangularComplicationSize
+        let graphSize = CGSize(
+            width: (fullSize.width * CLKComplicationTemplate.rectangularGraphWidthFraction).rounded(),
+            height: fullSize.height
+        )
         let scale = WKInterfaceDevice.current().screenScale
-        return chartManager.renderChartImage(size: size, scale: scale)
+        return chartManager.renderChartImage(size: graphSize, scale: scale)
     }
 
     func getCurrentTimelineEntry(for complication: CLKComplication, withHandler handler: (@escaping (CLKComplicationTimelineEntry?) -> Void)) {
@@ -89,6 +96,7 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
                                                                          from: context,
                                                                          at: timelineDate,
                                                                          recencyInterval: LoopCoreConstants.inputDataRecencyInterval,
+                                                                         rectangularFullSize: self.rectangularComplicationSize,
                                                                          chartGenerator: self.makeChart)
             {
                 switch complication.family {
@@ -123,11 +131,12 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
             ]
             
             if let loopLastRunDate = context.loopLastRunDate {
+                let loopInterval = context.loopInterval ?? LoopCompletionFreshness.defaultLoopInterval
                 let freshnessCategories = [
                     LoopCompletionFreshness.fresh,
                     LoopCompletionFreshness.aging,
                     LoopCompletionFreshness.stale
-                    ].compactMap( { $0.maxAge })
+                    ].compactMap( { $0.maxAge(for: loopInterval) })
                 futureChangeDates.append(contentsOf: freshnessCategories.map { loopLastRunDate + $0 + 1})
             }
             
@@ -136,6 +145,7 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
                                                                             from: context,
                                                                             at: futureChangeDate,
                                                                             recencyInterval: LoopCoreConstants.inputDataRecencyInterval,
+                                                                            rectangularFullSize: self.rectangularComplicationSize,
                                                                             chartGenerator: self.makeChart)
                 {
                     template.tintColor = UIColor.tintColor

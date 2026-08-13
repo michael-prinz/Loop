@@ -119,6 +119,9 @@ public class SettingsViewModel: ObservableObject {
     /// Largest selectable custom loop interval, in minutes.
     let maximumCustomLoopIntervalMinutes: Double = LoopSettings.maximumCustomLoopInterval.minutes
 
+    /// Whether the active pump supports the custom loop interval feature (currently Omnipod DASH only).
+    let pumpSupportsCustomLoopInterval: Bool
+
     var showDeleteTestData: Bool {
         availableSupports.contains(where: { $0.showsDeleteTestDataUI })
     }
@@ -139,6 +142,7 @@ public class SettingsViewModel: ObservableObject {
                 automaticDosingStrategy: AutomaticDosingStrategy,
                 initialCustomLoopIntervalEnabled: Bool,
                 initialCustomLoopIntervalMinutes: Double,
+                pumpSupportsCustomLoopInterval: Bool,
                 availableSupports: [SupportUI],
                 isOnboardingComplete: Bool,
                 therapySettingsViewModelDelegate: TherapySettingsViewModelDelegate?,
@@ -158,6 +162,7 @@ public class SettingsViewModel: ObservableObject {
         self.automaticDosingStrategy = automaticDosingStrategy
         self.customLoopIntervalEnabled = initialCustomLoopIntervalEnabled
         self.customLoopIntervalMinutes = initialCustomLoopIntervalMinutes
+        self.pumpSupportsCustomLoopInterval = pumpSupportsCustomLoopInterval
         self.availableSupports = availableSupports
         self.isOnboardingComplete = isOnboardingComplete
         self.therapySettingsViewModelDelegate = therapySettingsViewModelDelegate
@@ -208,6 +213,7 @@ extension SettingsViewModel {
                                  automaticDosingStrategy: .automaticBolus,
                                  initialCustomLoopIntervalEnabled: false,
                                  initialCustomLoopIntervalMinutes: LoopSettings.minimumCustomLoopInterval.minutes,
+                                 pumpSupportsCustomLoopInterval: false,
                                  availableSupports: [],
                                  isOnboardingComplete: false,
                                  therapySettingsViewModelDelegate: nil,

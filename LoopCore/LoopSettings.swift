@@ -131,6 +131,17 @@ public struct LoopSettings: Equatable {
 }
 
 extension LoopSettings {
+    /// The interval at which loop cycles are expected to complete. When a custom loop interval is
+    /// enabled (and closed loop is on) this reflects the user-configured, clamped interval;
+    /// otherwise it falls back to the default loop cadence. Used to scale loop-status freshness so
+    /// the indicator does not turn yellow/red before the next cycle is due.
+    public var effectiveLoopInterval: TimeInterval {
+        guard dosingEnabled, customLoopIntervalEnabled else {
+            return LoopCompletionFreshness.defaultLoopInterval
+        }
+        return min(max(customLoopInterval, LoopSettings.minimumCustomLoopInterval), LoopSettings.maximumCustomLoopInterval)
+    }
+
     public func effectiveGlucoseTargetRangeSchedule(presumingMealEntry: Bool = false) -> GlucoseRangeSchedule?  {
         
         let preMealOverride = presumingMealEntry ? nil : self.preMealOverride

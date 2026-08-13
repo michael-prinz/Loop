@@ -138,6 +138,16 @@ final class DeviceDataManager {
                 } else {
                     analyticsServicesManager.pumpWasRemoved()
                 }
+
+                // If the newly-selected pump does not support the custom loop interval, clear the
+                // setting so the loop-status freshness indicator and the actual loop cadence stay
+                // consistent. (loopManager is nil during initial startup, where the persisted pump is
+                // unchanged, so no reconciliation is needed there.)
+                if loopManager != nil, !pumpSupportsCustomLoopInterval, loopManager.settings.customLoopIntervalEnabled {
+                    loopManager.mutateSettings { settings in
+                        settings.customLoopIntervalEnabled = false
+                    }
+                }
             }
 
             setupPump()
@@ -952,7 +962,7 @@ extension DeviceDataManager {
         if shouldSyncPump {
             lastForegroundPumpSync = Date()
         } else {
-            log.default("Skipping foreground pump sync; last sync was %{public}.0f s ago", Date().timeIntervalSince(lastForegroundPumpSync))
+            log.debug("Skipping foreground pump sync; last sync was %{public}.0f s ago", Date().timeIntervalSince(lastForegroundPumpSync))
         }
         refreshDeviceData(includePumpData: shouldSyncPump)
     }
@@ -963,11 +973,20 @@ extension DeviceDataManager {
         }
     }
 
+    /// Plugin identifier for the Omnipod DASH (OmniBLE) pump manager.
+    private static let omnipodDashPluginIdentifier = "Omnipod-DASH"
+
+    /// Whether the currently-selected pump supports the custom loop interval feature.
+    /// This is currently limited to Omnipod DASH.
+    var pumpSupportsCustomLoopInterval: Bool {
+        return pumpManager?.pluginIdentifier == DeviceDataManager.omnipodDashPluginIdentifier
+    }
+
     /// The minimum interval between loop cycles triggered by new CGM data.
     /// When closed loop is enabled with a custom loop interval, looping (and therefore pump communication) is throttled to that interval.
     private var loopTriggerInterval: TimeInterval {
         let settings = loopManager.settings
-        guard settings.dosingEnabled, settings.customLoopIntervalEnabled else {
+        guard pumpSupportsCustomLoopInterval, settings.dosingEnabled, settings.customLoopIntervalEnabled else {
             return .minutes(4.2)
         }
         let interval = min(max(settings.customLoopInterval, LoopSettings.minimumCustomLoopInterval), LoopSettings.maximumCustomLoopInterval)

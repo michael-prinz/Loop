@@ -222,13 +222,13 @@ extension SettingsView {
 
     @ViewBuilder
     private var customLoopIntervalControls: some View {
-        Toggle(isOn: $viewModel.customLoopIntervalEnabled) {
-            Text("Custom Loop Interval", comment: "The title text for the custom loop interval switch cell")
-                .padding(.vertical, 3)
-        }
-        .disabled(!isClosedLoopOn)
+        if viewModel.pumpSupportsCustomLoopInterval {
+            Toggle(isOn: $viewModel.customLoopIntervalEnabled) {
+                Text("Custom Loop Interval", comment: "The title text for the custom loop interval switch cell")
+                    .padding(.vertical, 3)
+            }
+            .disabled(!isClosedLoopOn)
 
-        if viewModel.customLoopIntervalEnabled {
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text("Loop Interval", comment: "The label for the custom loop interval picker")
@@ -244,10 +244,9 @@ extension SettingsView {
                 }
                 .pickerStyle(.wheel)
                 .labelsHidden()
-                DescriptiveText(label: NSLocalizedString("Loop will run at this interval to reduce pump communication and conserve pump battery. Between loops, insulin delivery reverts to your scheduled basal rate.", comment: "Descriptive text for the custom loop interval picker"))
             }
             .padding(.vertical, 3)
-            .disabled(!isClosedLoopOn)
+            .disabled(!isClosedLoopOn || !viewModel.customLoopIntervalEnabled)
         }
     }
     

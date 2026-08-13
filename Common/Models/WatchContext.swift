@@ -35,6 +35,7 @@ final class WatchContext: RawRepresentable {
     }
 
     var loopLastRunDate: Date?
+    var loopInterval: TimeInterval?
     var lastNetTempBasalDose: Double?
     var lastNetTempBasalDate: Date?
     var recommendedBolusDose: Double?
@@ -88,6 +89,7 @@ final class WatchContext: RawRepresentable {
         batteryPercentage = rawValue["bp"] as? Double
 
         loopLastRunDate = rawValue["ld"] as? Date
+        loopInterval = rawValue["li"] as? TimeInterval
         lastNetTempBasalDose = rawValue["ba"] as? Double
         lastNetTempBasalDate = rawValue["bad"] as? Date
         recommendedBolusDose = rawValue["rbo"] as? Double
@@ -135,6 +137,7 @@ final class WatchContext: RawRepresentable {
         raw["gs"] = glucoseSyncIdentifier
         raw["iob"] = iob
         raw["ld"] = loopLastRunDate
+        raw["li"] = loopInterval
         raw["r"] = reservoir
         raw["rbo"] = recommendedBolusDose
         raw["pce"] = potentialCarbEntry?.rawValue

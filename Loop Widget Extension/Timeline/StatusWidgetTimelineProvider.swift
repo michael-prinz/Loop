@@ -37,7 +37,7 @@ class StatusWidgetTimelineProvider: TimelineProvider {
     func placeholder(in context: Context) -> StatusWidgetTimelimeEntry {
         log.default("%{public}@: context=%{public}@", #function, String(describing: context))
 
-        return StatusWidgetTimelimeEntry(date: Date(), contextUpdatedAt: Date(), lastLoopCompleted: nil, closeLoop: true, currentGlucose: nil, glucoseFetchedAt: Date(), delta: nil, unit: .milligramsPerDeciliter, sensor: nil, pumpHighlight: nil, netBasal: nil, eventualGlucose: nil, preMealPresetAllowed: true, preMealPresetActive: false, customPresetActive: false)
+        return StatusWidgetTimelimeEntry(date: Date(), contextUpdatedAt: Date(), lastLoopCompleted: nil, closeLoop: true, loopInterval: LoopCompletionFreshness.defaultLoopInterval, currentGlucose: nil, glucoseFetchedAt: Date(), delta: nil, unit: .milligramsPerDeciliter, sensor: nil, pumpHighlight: nil, netBasal: nil, eventualGlucose: nil, preMealPresetAllowed: true, preMealPresetActive: false, customPresetActive: false)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (StatusWidgetTimelimeEntry) -> ()) {
@@ -55,8 +55,12 @@ class StatusWidgetTimelineProvider: TimelineProvider {
 
             // Dates Loop completion staleness changes
             if let lastLoopCompleted = newEntry.lastLoopCompleted {
-                datesToRefreshWidget.append(lastLoopCompleted.addingTimeInterval(LoopCompletionFreshness.fresh.maxAge!+1)) // Turns yellow
-                datesToRefreshWidget.append(lastLoopCompleted.addingTimeInterval(LoopCompletionFreshness.aging.maxAge!+1)) // Turns red
+                if let freshMaxAge = LoopCompletionFreshness.fresh.maxAge(for: newEntry.loopInterval) {
+                    datesToRefreshWidget.append(lastLoopCompleted.addingTimeInterval(freshMaxAge + 1)) // Turns yellow
+                }
+                if let agingMaxAge = LoopCompletionFreshness.aging.maxAge(for: newEntry.loopInterval) {
+                    datesToRefreshWidget.append(lastLoopCompleted.addingTimeInterval(agingMaxAge + 1)) // Turns red
+                }
             }
 
             // Date glucose status staleness changes
@@ -124,6 +128,8 @@ class StatusWidgetTimelineProvider: TimelineProvider {
 
             let closeLoop = context.isClosedLoop ?? false
             
+            let loopInterval = context.loopInterval ?? LoopCompletionFreshness.defaultLoopInterval
+            
             let preMealPresetAllowed = context.preMealPresetAllowed ?? true
             let preMealPresetActive = context.preMealPresetActive ?? false
             let customPresetActive = context.customPresetActive ?? false
@@ -159,6 +165,7 @@ class StatusWidgetTimelineProvider: TimelineProvider {
                 contextUpdatedAt: contextUpdatedAt,
                 lastLoopCompleted: lastCompleted,
                 closeLoop: closeLoop,
+                loopInterval: loopInterval,
                 currentGlucose: currentGlucose,
                 glucoseFetchedAt: updateDate,
                 delta: delta,

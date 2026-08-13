@@ -536,6 +536,7 @@ class LiveActivityManager : LiveActivityManagerProxy {
                 isMmol: true,
                 isCloseLoop: false,
                 lastCompleted: nil,
+                loopInterval: nil,
                 bottomRow: [],
                 glucoseSamples: [],
                 predicatedGlucose: [],

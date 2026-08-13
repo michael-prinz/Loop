@@ -222,32 +222,30 @@ extension SettingsView {
 
     @ViewBuilder
     private var customLoopIntervalControls: some View {
-        if viewModel.pumpSupportsCustomLoopInterval {
-            Toggle(isOn: $viewModel.customLoopIntervalEnabled) {
-                Text("Custom Loop Interval", comment: "The title text for the custom loop interval switch cell")
-                    .padding(.vertical, 3)
-            }
-            .disabled(!isClosedLoopOn)
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text("Loop Interval", comment: "The label for the custom loop interval picker")
-                    Spacer()
-                    Text(String(format: NSLocalizedString("%d min", comment: "Custom loop interval value in minutes (1: number of minutes)"), Int(viewModel.customLoopIntervalMinutes.rounded())))
-                        .foregroundColor(.secondary)
-                }
-                Picker("", selection: $viewModel.customLoopIntervalMinutes) {
-                    ForEach(Int(viewModel.minimumCustomLoopIntervalMinutes)...Int(viewModel.maximumCustomLoopIntervalMinutes), id: \.self) { minute in
-                        Text(String(format: NSLocalizedString("%d min", comment: "Custom loop interval value in minutes (1: number of minutes)"), minute))
-                            .tag(Double(minute))
-                    }
-                }
-                .pickerStyle(.wheel)
-                .labelsHidden()
-            }
-            .padding(.vertical, 3)
-            .disabled(!isClosedLoopOn || !viewModel.customLoopIntervalEnabled)
+        Toggle(isOn: $viewModel.customLoopIntervalEnabled) {
+            Text("Custom Loop Interval", comment: "The title text for the custom loop interval switch cell")
+                .padding(.vertical, 3)
         }
+        .disabled(!isClosedLoopOn)
+
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text("Loop Interval", comment: "The label for the custom loop interval picker")
+                Spacer()
+                Text(String(format: NSLocalizedString("%d min", comment: "Custom loop interval value in minutes (1: number of minutes)"), Int(viewModel.customLoopIntervalMinutes.rounded())))
+                    .foregroundColor(.secondary)
+            }
+            Picker("", selection: $viewModel.customLoopIntervalMinutes) {
+                ForEach(Int(viewModel.minimumCustomLoopIntervalMinutes)...Int(viewModel.maximumCustomLoopIntervalMinutes), id: \.self) { minute in
+                    Text(String(format: NSLocalizedString("%d min", comment: "Custom loop interval value in minutes (1: number of minutes)"), minute))
+                        .tag(Double(minute))
+                }
+            }
+            .pickerStyle(.wheel)
+            .labelsHidden()
+        }
+        .padding(.vertical, 3)
+        .disabled(!isClosedLoopOn || !viewModel.customLoopIntervalEnabled)
     }
     
     private var softwareUpdateSection: some View {

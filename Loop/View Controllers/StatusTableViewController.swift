@@ -1640,7 +1640,6 @@ final class StatusTableViewController: LoopChartsTableViewController {
                                           automaticDosingStrategy: deviceManager.loopManager.settings.automaticDosingStrategy,
                                           initialCustomLoopIntervalEnabled: deviceManager.loopManager.settings.customLoopIntervalEnabled,
                                           initialCustomLoopIntervalMinutes: deviceManager.loopManager.settings.customLoopInterval.minutes,
-                                          pumpSupportsCustomLoopInterval: deviceManager.pumpSupportsCustomLoopInterval,
                                           availableSupports: supportManager.availableSupports,
                                           isOnboardingComplete: onboardingManager.isComplete,
                                           therapySettingsViewModelDelegate: deviceManager,

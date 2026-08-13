@@ -43,6 +43,8 @@ final class AppDelegate: UIResponder, UIApplicationDelegate, WindowProvider {
 
     func applicationDidEnterBackground(_ application: UIApplication) {
         log.default(#function)
+
+        loopAppManager.didEnterBackground()
     }
 
     func applicationWillEnterForeground(_ application: UIApplication) {

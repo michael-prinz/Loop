@@ -47,6 +47,13 @@ final class DeviceDataManager {
 
     private var lastCGMLoopTrigger: Date = .distantPast
 
+    /// Tracks whether the app is currently backgrounded, so that pump communication can be suppressed while in open loop.
+    private var isAppInBackground = false
+
+    /// The last time pump data was synced as a result of the app coming to the foreground.
+    /// Used to avoid reconnecting to the pump on every foreground event (e.g. rapidly opening/closing the app).
+    private var lastForegroundPumpSync: Date = .distantPast
+
     private let automaticDosingStatus: AutomaticDosingStatus
 
     var closedLoopDisallowedLocalizedDescription: String? {
@@ -565,6 +572,14 @@ final class DeviceDataManager {
             return
         }
 
+        // In open loop, avoid waking/contacting the pump while the app is backgrounded to conserve pump battery.
+        // Pump status is synced when the app returns to the foreground (see didBecomeActive()).
+        if !loopManager.settings.dosingEnabled, isAppInBackground {
+            self.log.default("Open loop in background: skipping pump data sync to conserve pump battery")
+            self.loopManager.loop()
+            return
+        }
+
         self.log.default("Asserting current pump data")
         guard let pumpManager = pumpManager else {
             // Run loop, even if pump is missing, to ensure stored dosing decision
@@ -926,7 +941,38 @@ extension DeviceDataManager {
     }
 
     func didBecomeActive() {
+        queue.async {
+            self.isAppInBackground = false
+        }
         updatePumpManagerBLEHeartbeatPreference()
+        // Sync pump status now that the app is in the foreground. In open loop this is the only time we contact the pump.
+        // Throttle pump communication so that repeatedly opening/closing the app doesn't reconnect to the pump each time;
+        // only sync if the last foreground pump sync is older than the loop trigger interval. CGM data is always refreshed.
+        let shouldSyncPump = Date().timeIntervalSince(lastForegroundPumpSync) > loopTriggerInterval
+        if shouldSyncPump {
+            lastForegroundPumpSync = Date()
+        } else {
+            log.debug("Skipping foreground pump sync; last sync was %{public}.0f s ago", Date().timeIntervalSince(lastForegroundPumpSync))
+        }
+        refreshDeviceData(includePumpData: shouldSyncPump)
+    }
+
+    func didEnterBackground() {
+        queue.async {
+            self.isAppInBackground = true
+        }
+    }
+
+    /// The minimum interval between loop cycles triggered by new CGM data.
+    /// When closed loop is enabled with a custom loop interval, looping (and therefore pump communication) is throttled to that interval.
+    private var loopTriggerInterval: TimeInterval {
+        let settings = loopManager.settings
+        guard settings.dosingEnabled, settings.customLoopIntervalEnabled else {
+            return .minutes(4.2)
+        }
+        let interval = min(max(settings.customLoopInterval, LoopSettings.minimumCustomLoopInterval), LoopSettings.maximumCustomLoopInterval)
+        // Subtract a small buffer so the throttle reliably fires on the CGM reading that lands at/after the target interval.
+        return interval - .minutes(1)
     }
 
     func updatePumpManagerBLEHeartbeatPreference() {
@@ -1013,7 +1059,7 @@ extension DeviceDataManager: CGMManagerDelegate {
         log.default("CGMManager:%{public}@ did update with %{public}@", String(describing: type(of: manager)), String(describing: readingResult))
         processCGMReadingResult(manager, readingResult: readingResult) {
             let now = Date()
-            if case .newData = readingResult, now.timeIntervalSince(self.lastCGMLoopTrigger) > .minutes(4.2) {
+            if case .newData = readingResult, now.timeIntervalSince(self.lastCGMLoopTrigger) > self.loopTriggerInterval {
                 self.log.default("Triggering loop from new CGM data at %{public}@", String(describing: now))
                 self.lastCGMLoopTrigger = now
                 self.checkPumpDataAndLoop()
@@ -1101,7 +1147,7 @@ extension DeviceDataManager: PumpManagerDelegate {
         refreshCGM()
     }
     
-    private func refreshCGM(_ completion: (() -> Void)? = nil) {        
+    private func refreshCGM(triggerLoop: Bool = true, _ completion: (() -> Void)? = nil) {
         guard let cgmManager = cgmManager else {
             completion?()
             return
@@ -1114,7 +1160,7 @@ extension DeviceDataManager: PumpManagerDelegate {
 
             self.queue.async {
                 self.processCGMReadingResult(cgmManager, readingResult: result) {
-                    if self.loopManager.lastLoopCompleted == nil || self.loopManager.lastLoopCompleted!.timeIntervalSinceNow < -.minutes(4.2) {
+                    if triggerLoop, self.loopManager.lastLoopCompleted == nil || self.loopManager.lastLoopCompleted!.timeIntervalSinceNow < -self.loopTriggerInterval {
                         self.log.default("Triggering Loop from refreshCGM()")
                         self.checkPumpDataAndLoop()
                     }
@@ -1125,8 +1171,18 @@ extension DeviceDataManager: PumpManagerDelegate {
     }
     
     func refreshDeviceData() {
-        refreshCGM() {
+        refreshDeviceData(includePumpData: true)
+    }
+
+    /// Refreshes CGM data and, when `includePumpData` is true, syncs current pump data.
+    /// - Parameter includePumpData: When false, only CGM data is refreshed and the pump is not contacted at all
+    ///   (neither directly nor via a loop triggered by the refresh).
+    func refreshDeviceData(includePumpData: Bool) {
+        refreshCGM(triggerLoop: includePumpData) {
             self.queue.async {
+                guard includePumpData else {
+                    return
+                }
                 guard let pumpManager = self.pumpManager, pumpManager.isOnboarded else {
                     return
                 }

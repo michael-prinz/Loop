@@ -335,6 +335,10 @@ class LoopAppManager: NSObject {
         WidgetCenter.shared.reloadAllTimelines()
     }
 
+    func didEnterBackground() {
+        deviceDataManager?.didEnterBackground()
+    }
+
     // MARK: - Remote Notification
     
     func remoteNotificationRegistrationDidFinish(_ result: Result<Data,Error>) {

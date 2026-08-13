@@ -74,7 +74,22 @@ public struct LoopSettings: Equatable {
     public var automaticDosingStrategy: AutomaticDosingStrategy = .tempBasalOnly
 
     public var defaultRapidActingModel: ExponentialInsulinModelPreset?
-    
+
+    /// Smallest allowed value for `customLoopInterval`.
+    public static let minimumCustomLoopInterval: TimeInterval = .minutes(5)
+
+    /// Largest allowed value for `customLoopInterval`.
+    public static let maximumCustomLoopInterval: TimeInterval = .minutes(60)
+
+    /// Default value for `customLoopInterval` when the user has not chosen one yet.
+    public static let defaultCustomLoopInterval: TimeInterval = .minutes(15)
+
+    /// When `true` (and closed loop is enabled), the loop cycle is throttled to `customLoopInterval` to reduce pump communication.
+    public var customLoopIntervalEnabled = false
+
+    /// User-configured loop interval, applied only when `customLoopIntervalEnabled` is `true` and closed loop is on. Clamped to `minimumCustomLoopInterval...maximumCustomLoopInterval`.
+    public var customLoopInterval: TimeInterval = LoopSettings.defaultCustomLoopInterval
+
     public var glucoseUnit: HKUnit? {
         return glucoseTargetRangeSchedule?.unit
     }
@@ -94,6 +109,8 @@ public struct LoopSettings: Equatable {
         maximumBolus: Double? = nil,
         suspendThreshold: GlucoseThreshold? = nil,
         automaticDosingStrategy: AutomaticDosingStrategy = .tempBasalOnly,
+        customLoopIntervalEnabled: Bool = false,
+        customLoopInterval: TimeInterval = LoopSettings.defaultCustomLoopInterval,
         defaultRapidActingModel: ExponentialInsulinModelPreset? = nil
     ) {
         self.dosingEnabled = dosingEnabled
@@ -110,11 +127,24 @@ public struct LoopSettings: Equatable {
         self.maximumBolus = maximumBolus
         self.suspendThreshold = suspendThreshold
         self.automaticDosingStrategy = automaticDosingStrategy
+        self.customLoopIntervalEnabled = customLoopIntervalEnabled
+        self.customLoopInterval = customLoopInterval
         self.defaultRapidActingModel = defaultRapidActingModel
     }
 }
 
 extension LoopSettings {
+    /// The interval at which loop cycles are expected to complete. When a custom loop interval is
+    /// enabled (and closed loop is on) this reflects the user-configured, clamped interval;
+    /// otherwise it falls back to the default loop cadence. Used to scale loop-status freshness so
+    /// the indicator does not turn yellow/red before the next cycle is due.
+    public var effectiveLoopInterval: TimeInterval {
+        guard dosingEnabled, customLoopIntervalEnabled else {
+            return LoopCompletionFreshness.defaultLoopInterval
+        }
+        return min(max(customLoopInterval, LoopSettings.minimumCustomLoopInterval), LoopSettings.maximumCustomLoopInterval)
+    }
+
     public func effectiveGlucoseTargetRangeSchedule(presumingMealEntry: Bool = false) -> GlucoseRangeSchedule?  {
         
         let preMealOverride = presumingMealEntry ? nil : self.preMealOverride
@@ -277,6 +307,14 @@ extension LoopSettings: RawRepresentable {
         {
             self.automaticDosingStrategy = automaticDosingStrategy
         }
+
+        if let customLoopIntervalEnabled = rawValue["customLoopIntervalEnabled"] as? Bool {
+            self.customLoopIntervalEnabled = customLoopIntervalEnabled
+        }
+
+        if let customLoopInterval = rawValue["customLoopInterval"] as? TimeInterval {
+            self.customLoopInterval = min(max(customLoopInterval, LoopSettings.minimumCustomLoopInterval), LoopSettings.maximumCustomLoopInterval)
+        }
     }
 
     public var rawValue: RawValue {
@@ -295,6 +333,8 @@ extension LoopSettings: RawRepresentable {
         raw["maximumBolus"] = maximumBolus
         raw["minimumBGGuard"] = suspendThreshold?.rawValue
         raw["dosingStrategy"] = automaticDosingStrategy.rawValue
+        raw["customLoopIntervalEnabled"] = customLoopIntervalEnabled
+        raw["customLoopInterval"] = customLoopInterval
         
         return raw
     }

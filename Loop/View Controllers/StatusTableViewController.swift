@@ -387,6 +387,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
 
         // This should be kept up to date immediately
         hudView?.loopCompletionHUD.lastLoopCompleted = deviceManager.loopManager.lastLoopCompleted
+        hudView?.loopCompletionHUD.loopInterval = deviceManager.loopManager.settings.effectiveLoopInterval
 
         guard !reloading && !deviceManager.authorizationRequired else {
             return
@@ -1637,6 +1638,8 @@ final class StatusTableViewController: LoopChartsTableViewController {
                                           initialDosingEnabled: deviceManager.loopManager.settings.dosingEnabled,
                                           isClosedLoopAllowed: automaticDosingStatus.$isAutomaticDosingAllowed,
                                           automaticDosingStrategy: deviceManager.loopManager.settings.automaticDosingStrategy,
+                                          initialCustomLoopIntervalEnabled: deviceManager.loopManager.settings.customLoopIntervalEnabled,
+                                          initialCustomLoopIntervalMinutes: deviceManager.loopManager.settings.customLoopInterval.minutes,
                                           availableSupports: supportManager.availableSupports,
                                           isOnboardingComplete: onboardingManager.isComplete,
                                           therapySettingsViewModelDelegate: deviceManager,
@@ -1702,6 +1705,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
             hudView.loopCompletionHUD.stateColors = .loopStatus
             hudView.loopCompletionHUD.loopIconClosed = automaticDosingStatus.automaticDosingEnabled
             hudView.loopCompletionHUD.lastLoopCompleted = deviceManager.loopManager.lastLoopCompleted
+            hudView.loopCompletionHUD.loopInterval = deviceManager.loopManager.settings.effectiveLoopInterval
 
             hudView.cgmStatusHUD.stateColors = .cgmStatus
             hudView.cgmStatusHUD.tintColor = .label
@@ -2223,6 +2227,18 @@ extension StatusTableViewController: SettingsViewModelDelegate {
     func dosingStrategyChanged(_ strategy: AutomaticDosingStrategy) {
         self.deviceManager.loopManager.mutateSettings { settings in
             settings.automaticDosingStrategy = strategy
+        }
+    }
+
+    func customLoopIntervalEnabledChanged(_ enabled: Bool) {
+        deviceManager.loopManager.mutateSettings { settings in
+            settings.customLoopIntervalEnabled = enabled
+        }
+    }
+
+    func customLoopIntervalChanged(_ interval: TimeInterval) {
+        deviceManager.loopManager.mutateSettings { settings in
+            settings.customLoopInterval = min(max(interval, LoopSettings.minimumCustomLoopInterval), LoopSettings.maximumCustomLoopInterval)
         }
     }
 

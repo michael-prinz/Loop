@@ -118,4 +118,29 @@ class LoopSettingsTests: XCTestCase {
         let actualOverrideRange = settings.effectiveGlucoseTargetRangeSchedule()?.value(at: overrideStart.addingTimeInterval(2 /* hours */ * 60 * 60))
         XCTAssertEqual(actualOverrideRange, overrideTargetRange)
     }
+
+    func testCustomLoopIntervalRawValueRoundTrip() {
+        var settings = LoopSettings()
+        settings.customLoopIntervalEnabled = true
+        settings.customLoopInterval = .minutes(30)
+
+        let restored = LoopSettings(rawValue: settings.rawValue)
+        XCTAssertEqual(restored?.customLoopIntervalEnabled, true)
+        XCTAssertEqual(restored?.customLoopInterval, .minutes(30))
+    }
+
+    func testCustomLoopIntervalDefaults() {
+        let settings = LoopSettings()
+        XCTAssertFalse(settings.customLoopIntervalEnabled)
+        XCTAssertEqual(settings.customLoopInterval, LoopSettings.minimumCustomLoopInterval)
+    }
+
+    func testCustomLoopIntervalClampedOnDecode() {
+        var raw = LoopSettings().rawValue
+        raw["customLoopInterval"] = TimeInterval.minutes(120)
+        XCTAssertEqual(LoopSettings(rawValue: raw)?.customLoopInterval, LoopSettings.maximumCustomLoopInterval)
+
+        raw["customLoopInterval"] = TimeInterval.minutes(1)
+        XCTAssertEqual(LoopSettings(rawValue: raw)?.customLoopInterval, LoopSettings.minimumCustomLoopInterval)
+    }
 }

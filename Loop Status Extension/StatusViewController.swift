@@ -242,6 +242,10 @@ class StatusViewController: UIViewController, NCWidgetProviding {
                 self.hudView.loopCompletionHUD.lastLoopCompleted = lastCompleted
             }
             
+            if let loopInterval = context.loopInterval {
+                self.hudView.loopCompletionHUD.loopInterval = loopInterval
+            }
+            
             if let isClosedLoop = context.isClosedLoop {
                 self.hudView.loopCompletionHUD.loopIconClosed = isClosedLoop
             }

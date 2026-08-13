@@ -189,6 +189,7 @@ class LiveActivityManager : LiveActivityManagerProxy {
                 isMmol: isMmol,
                 isCloseLoop: statusContext?.isClosedLoop ?? false,
                 lastCompleted: statusContext?.lastLoopCompleted,
+                loopInterval: statusContext?.loopInterval,
                 bottomRow: bottomRow,
                 // In order to prevent maxSize errors, only allow the last 100 samples to be sent
                 // Will most likely not be an issue, might be an issue for debugging/CGM simulator with 5sec interval
@@ -535,6 +536,7 @@ class LiveActivityManager : LiveActivityManagerProxy {
                 isMmol: true,
                 isCloseLoop: false,
                 lastCompleted: nil,
+                loopInterval: nil,
                 bottomRow: [],
                 glucoseSamples: [],
                 predicatedGlucose: [],

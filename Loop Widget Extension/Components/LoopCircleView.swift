@@ -14,9 +14,7 @@ struct LoopCircleView: View {
 
     var body: some View {
         let closeLoop = entry.closeLoop
-        let lastLoopCompleted = entry.lastLoopCompleted ?? Date().addingTimeInterval(.minutes(16))
-        let age = abs(min(0, lastLoopCompleted.timeIntervalSinceNow))
-        let freshness = LoopCompletionFreshness(age: age)
+        let freshness = LoopCompletionFreshness(lastCompletion: entry.lastLoopCompleted, at: entry.date, loopInterval: entry.loopInterval)
         
         let loopColor = getLoopColor(freshness: freshness)
         

@@ -47,6 +47,9 @@ final class DeviceDataManager {
 
     private var lastCGMLoopTrigger: Date = .distantPast
 
+    /// Tracks whether the one-time immediate loop has already fired for the current closed-loop activation.
+    private var closedLoopImmediateLoopTriggered = false
+
     /// Tracks whether the app is currently backgrounded, so that pump communication can be suppressed while in open loop.
     private var isAppInBackground = false
 
@@ -565,6 +568,25 @@ final class DeviceDataManager {
 
         return Manager.init(rawState: rawState) as? PumpManagerUI
     }
+
+    func closedLoopActivationDidChange(_ enabled: Bool) {
+        queue.async {
+            if !enabled {
+                self.closedLoopImmediateLoopTriggered = false
+                return
+            }
+
+            guard !self.closedLoopImmediateLoopTriggered else {
+                return
+            }
+
+            self.closedLoopImmediateLoopTriggered = true
+            let now = Date()
+            self.log.default("Closed loop enabled; triggering immediate loop and resetting loop cadence timer")
+            self.lastCGMLoopTrigger = now
+            self.checkPumpDataAndLoop()
+        }
+    }
     
     private func checkPumpDataAndLoop() {
         guard !crashRecoveryManager.pendingCrashRecovery else {
@@ -572,24 +594,10 @@ final class DeviceDataManager {
             return
         }
 
-        // In open loop, avoid waking/contacting the pump while the app is backgrounded to conserve pump battery.
-        // Pump status is synced when the app returns to the foreground (see didBecomeActive()).
-        if !loopManager.settings.dosingEnabled, isAppInBackground {
-            self.log.default("Open loop in background: skipping pump data sync to conserve pump battery")
-            self.loopManager.loop()
-            return
-        }
-
-        self.log.default("Asserting current pump data")
-        guard let pumpManager = pumpManager else {
-            // Run loop, even if pump is missing, to ensure stored dosing decision
-            self.loopManager.loop()
-            return
-        }
-
-        pumpManager.ensureCurrentPumpData() { (lastSync) in
-            self.loopManager.loop()
-        }
+        // Only do a real pump communication when a dosing action is actually being enacted.
+        // The loop calculation can run without forcing a pump sync on every cycle.
+        self.log.default("Running loop without forced pump sync on this cycle")
+        self.loopManager.loop()
     }
 
     private func processCGMReadingResult(_ manager: CGMManager, readingResult: CGMReadingResult, completion: @escaping () -> Void) {

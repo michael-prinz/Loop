@@ -2273,6 +2273,8 @@ extension StatusTableViewController: SettingsViewModelDelegate {
         deviceManager.loopManager.mutateSettings { settings in
             settings.dosingEnabled = value
         }
+
+        deviceManager.closedLoopActivationDidChange(value)
     }
     
     func dosingStrategyChanged(_ strategy: AutomaticDosingStrategy) {

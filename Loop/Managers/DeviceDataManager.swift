@@ -587,17 +587,36 @@ final class DeviceDataManager {
             self.checkPumpDataAndLoop()
         }
     }
-    
+
+    /// Age at which stored pump data must be refreshed before looping. The loop rejects pump data older than
+    /// `LoopCoreConstants.inputDataRecencyInterval` with `LoopError.pumpDataTooOld`, so sync ahead of that
+    /// deadline to leave room for the pump communication itself.
+    private static let pumpDataRefreshThreshold: TimeInterval = LoopCoreConstants.inputDataRecencyInterval - .minutes(5)
+
     private func checkPumpDataAndLoop() {
         guard !crashRecoveryManager.pendingCrashRecovery else {
             self.log.default("Loop paused pending crash recovery acknowledgement.")
             return
         }
 
-        // Only do a real pump communication when a dosing action is actually being enacted.
-        // The loop calculation can run without forcing a pump sync on every cycle.
-        self.log.default("Running loop without forced pump sync on this cycle")
-        self.loopManager.loop()
+        guard let pumpManager = pumpManager else {
+            // Run loop, even if pump is missing, to ensure stored dosing decision
+            self.loopManager.loop()
+            return
+        }
+
+        // Only do a real pump communication when the stored pump data would otherwise be too old to loop on.
+        let pumpDataAge = Date().timeIntervalSince(doseStore.lastAddedPumpData)
+        guard pumpDataAge >= Self.pumpDataRefreshThreshold else {
+            self.log.default("Running loop without pump sync; pump data is %{public}.0f s old", pumpDataAge)
+            self.loopManager.loop()
+            return
+        }
+
+        self.log.default("Asserting current pump data; pump data is %{public}.0f s old", pumpDataAge)
+        pumpManager.ensureCurrentPumpData { _ in
+            self.loopManager.loop()
+        }
     }
 
     private func processCGMReadingResult(_ manager: CGMManager, readingResult: CGMReadingResult, completion: @escaping () -> Void) {
@@ -972,10 +991,10 @@ extension DeviceDataManager {
     }
 
     /// The minimum interval between loop cycles triggered by new CGM data.
-    /// When closed loop is enabled with a custom loop interval, looping (and therefore pump communication) is throttled to that interval.
+    /// With a custom loop interval, looping (and therefore pump communication) is throttled to that interval.
     private var loopTriggerInterval: TimeInterval {
         let settings = loopManager.settings
-        guard settings.dosingEnabled, settings.customLoopIntervalEnabled else {
+        guard settings.customLoopIntervalEnabled else {
             return .minutes(4.2)
         }
         let interval = min(max(settings.customLoopInterval, LoopSettings.minimumCustomLoopInterval), LoopSettings.maximumCustomLoopInterval)

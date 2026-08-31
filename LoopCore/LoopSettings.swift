@@ -84,10 +84,10 @@ public struct LoopSettings: Equatable {
     /// Default value for `customLoopInterval` when the user has not chosen one yet.
     public static let defaultCustomLoopInterval: TimeInterval = .minutes(15)
 
-    /// When `true` (and closed loop is enabled), the loop cycle is throttled to `customLoopInterval` to reduce pump communication.
+    /// When `true`, the loop cycle is throttled to `customLoopInterval` to reduce pump communication.
     public var customLoopIntervalEnabled = false
 
-    /// User-configured loop interval, applied only when `customLoopIntervalEnabled` is `true` and closed loop is on. Clamped to `minimumCustomLoopInterval...maximumCustomLoopInterval`.
+    /// User-configured loop interval, applied when `customLoopIntervalEnabled` is `true`. Clamped to `minimumCustomLoopInterval...maximumCustomLoopInterval`.
     public var customLoopInterval: TimeInterval = LoopSettings.defaultCustomLoopInterval
 
     public var glucoseUnit: HKUnit? {
@@ -135,11 +135,11 @@ public struct LoopSettings: Equatable {
 
 extension LoopSettings {
     /// The interval at which loop cycles are expected to complete. When a custom loop interval is
-    /// enabled (and closed loop is on) this reflects the user-configured, clamped interval;
-    /// otherwise it falls back to the default loop cadence. Used to scale loop-status freshness so
-    /// the indicator does not turn yellow/red before the next cycle is due.
+    /// enabled this reflects the user-configured, clamped interval; otherwise it falls back to the
+    /// default loop cadence. Used to scale loop-status freshness so the indicator does not turn
+    /// yellow/red before the next cycle is due.
     public var effectiveLoopInterval: TimeInterval {
-        guard dosingEnabled, customLoopIntervalEnabled else {
+        guard customLoopIntervalEnabled else {
             return LoopCompletionFreshness.defaultLoopInterval
         }
         return min(max(customLoopInterval, LoopSettings.minimumCustomLoopInterval), LoopSettings.maximumCustomLoopInterval)

@@ -176,10 +176,6 @@ extension SettingsView {
             Text("Done").bold()
         }
     }
-    
-    private var isClosedLoopOn: Bool {
-        viewModel.isClosedLoopAllowed && viewModel.closedLoopPreference
-    }
 
     private var loopSection: some View {
         Section(header: SectionHeader(label: localizedAppNameAndVersion)) {
@@ -207,7 +203,6 @@ extension SettingsView {
             Text("Custom Loop Interval", comment: "The title text for the custom loop interval switch cell")
                 .padding(.vertical, 3)
         }
-        .disabled(!isClosedLoopOn)
 
         VStack(alignment: .leading, spacing: 4) {
             HStack {
@@ -226,7 +221,7 @@ extension SettingsView {
             .labelsHidden()
         }
         .padding(.vertical, 3)
-        .disabled(!isClosedLoopOn || !viewModel.customLoopIntervalEnabled)
+        .disabled(!viewModel.customLoopIntervalEnabled)
     }
     
     private var softwareUpdateSection: some View {

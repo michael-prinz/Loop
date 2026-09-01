@@ -254,7 +254,7 @@ extension CLKComplicationTemplate {
         fallbackTimeText: CLKTextProvider
     ) -> CLKTextProvider {
         let glucoseText = CLKSimpleTextProvider(text: glucoseAndTrend, shortText: glucoseString, accessibilityLabel: accessibilityLabel)
-        glucoseText.tintColor = glucoseDisplayTier?.complicationColor
+        glucoseText.tintColor = glucoseDisplayTier?.complicationColor ?? freshnessColor
 
         var providers: [CLKTextProvider] = [glucoseText]
 
@@ -265,7 +265,7 @@ extension CLKComplicationTemplate {
             providers.append(separator)
 
             let eventualText = CLKSimpleTextProvider(text: eventualString)
-            eventualText.tintColor = eventualGlucoseDisplayTier?.complicationColor
+            eventualText.tintColor = eventualGlucoseDisplayTier?.complicationColor ?? freshnessColor
             providers.append(eventualText)
         } else {
             providers.append(fallbackTimeText)
@@ -289,7 +289,7 @@ extension GlucoseDisplayTier {
         case .inRange:
             return .tintColor
         case .outOfRange:
-            return .systemOrange
+            return .agingColor
         case .urgent:
             return .staleColor
         }

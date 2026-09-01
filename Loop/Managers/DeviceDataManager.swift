@@ -967,7 +967,7 @@ extension DeviceDataManager {
 
     /// The minimum interval between loop cycles triggered by new CGM data. The loop cycle is never throttled
     /// beyond the CGM cadence; only pump communication honors `pumpDataRefreshInterval`.
-    private let loopTriggerInterval: TimeInterval = .minutes(4.2)
+    private var loopTriggerInterval: TimeInterval { .minutes(4.2) }
 
     /// Minimum age of stored pump data before a background pump sync is performed, or `nil` when background
     /// pump communication is suppressed entirely.

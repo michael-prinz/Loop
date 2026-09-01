@@ -568,7 +568,7 @@ extension AlertManager {
 
 // MARK: PersistedAlertStore
 extension AlertManager: PersistedAlertStore {
-    public func doesIssuedAlertExist(identifier: Alert.Identifier, completion: @escaping (Result<Bool, Error>) -> Void) {
+    public func doesIssuedAlertExist(identifier: Alert.Identifier, completion: @escaping (Swift.Result<Bool, Error>) -> Void) {
         alertStore.lookupAllMatching(identifier: identifier) { result in
             switch result {
             case .success(let storedAlerts):
@@ -579,7 +579,7 @@ extension AlertManager: PersistedAlertStore {
         }
     }
 
-    public func lookupAllUnretracted(managerIdentifier: String, completion: @escaping (Result<[PersistedAlert], Error>) -> Void) {
+    public func lookupAllUnretracted(managerIdentifier: String, completion: @escaping (Swift.Result<[PersistedAlert], Error>) -> Void) {
         alertStore.lookupAllUnretracted(managerIdentifier: managerIdentifier) {
             switch $0 {
             case .success(let alerts):
@@ -606,7 +606,7 @@ extension AlertManager: PersistedAlertStore {
         }
     }
 
-    public func lookupAllUnacknowledgedUnretracted(managerIdentifier: String, completion: @escaping (Result<[PersistedAlert], Error>) -> Void) {
+    public func lookupAllUnacknowledgedUnretracted(managerIdentifier: String, completion: @escaping (Swift.Result<[PersistedAlert], Error>) -> Void) {
         alertStore.lookupAllUnacknowledgedUnretracted(managerIdentifier: managerIdentifier) {
             switch $0 {
             case .success(let alerts):
@@ -633,7 +633,7 @@ extension AlertManager: PersistedAlertStore {
         }
     }
 
-    private func lookupAllPendingDelayedOrRepeatingAlerts(completion: @escaping (Result<[PersistedAlert], Error>) -> Void) {
+    private func lookupAllPendingDelayedOrRepeatingAlerts(completion: @escaping (Swift.Result<[PersistedAlert], Error>) -> Void) {
         // the interval provided is not used in the search. Just the trigger stored type value
         alertStore.lookupAllUnacknowledgedUnretracted(filteredByTriggers: [Alert.Trigger.delayed(interval: 0).storedType, Alert.Trigger.repeating(repeatInterval: 0).storedType]) {
             switch $0 {
@@ -665,7 +665,7 @@ extension AlertManager: PersistedAlertStore {
         alertStore.recordRetractedAlert(alert, at: date)
     }
 
-    private func recordIssued(alert: Alert, at date: Date = Date(), completion: ((Result<Void, Error>) -> Void)? = nil) {
+    private func recordIssued(alert: Alert, at date: Date = Date(), completion: ((Swift.Result<Void, Error>) -> Void)? = nil) {
         alertStore.recordIssued(alert: alert, at: date, completion: completion)
     }
 }

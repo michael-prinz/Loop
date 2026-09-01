@@ -8,6 +8,7 @@
 
 import LoopKit
 import LoopKitUI
+import LoopCore
 import MockKit
 import SwiftUI
 import HealthKit

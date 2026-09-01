@@ -119,14 +119,14 @@ class AlertManagerTests: XCTestCase {
     class MockAlertStore: AlertStore {
         
         var issuedAlert: Alert?
-        override public func recordIssued(alert: Alert, at date: Date = Date(), completion: ((Result<Void, Error>) -> Void)? = nil) {
+        override public func recordIssued(alert: Alert, at date: Date = Date(), completion: ((Swift.Result<Void, Error>) -> Void)? = nil) {
             issuedAlert = alert
             completion?(.success)
         }
 
         var retractedAlert: Alert?
         var retractedAlertDate: Date?
-        override public func recordRetractedAlert(_ alert: Alert, at date: Date, completion: ((Result<Void, Error>) -> Void)? = nil) {
+        override public func recordRetractedAlert(_ alert: Alert, at date: Date, completion: ((Swift.Result<Void, Error>) -> Void)? = nil) {
             retractedAlert = alert
             retractedAlertDate = date
             completion?(.success)
@@ -135,7 +135,7 @@ class AlertManagerTests: XCTestCase {
         var acknowledgedAlertIdentifier: Alert.Identifier?
         var acknowledgedAlertDate: Date?
         override public func recordAcknowledgement(of identifier: Alert.Identifier, at date: Date = Date(),
-                                                   completion: ((Result<Void, Error>) -> Void)? = nil) {
+                                                   completion: ((Swift.Result<Void, Error>) -> Void)? = nil) {
             acknowledgedAlertIdentifier = identifier
             acknowledgedAlertDate = date
             completion?(.success)
@@ -143,18 +143,18 @@ class AlertManagerTests: XCTestCase {
         
         var retractededAlertIdentifier: Alert.Identifier?
         override public func recordRetraction(of identifier: Alert.Identifier, at date: Date = Date(),
-                                              completion: ((Result<Void, Error>) -> Void)? = nil) {
+                                              completion: ((Swift.Result<Void, Error>) -> Void)? = nil) {
             retractededAlertIdentifier = identifier
             retractedAlertDate = date
             completion?(.success)
         }
 
         var storedAlerts = [StoredAlert]()
-        override public func lookupAllUnacknowledgedUnretracted(managerIdentifier: String? = nil, filteredByTriggers triggersStoredType: [AlertTriggerStoredType]? = nil, completion: @escaping (Result<[StoredAlert], Error>) -> Void) {
+        override public func lookupAllUnacknowledgedUnretracted(managerIdentifier: String? = nil, filteredByTriggers triggersStoredType: [AlertTriggerStoredType]? = nil, completion: @escaping (Swift.Result<[StoredAlert], Error>) -> Void) {
             completion(.success(storedAlerts))
         }
         
-        override public func lookupAllUnretracted(managerIdentifier: String?, completion: @escaping (Result<[StoredAlert], Error>) -> Void) {
+        override public func lookupAllUnretracted(managerIdentifier: String?, completion: @escaping (Swift.Result<[StoredAlert], Error>) -> Void) {
             completion(.success(storedAlerts))
         }
     }

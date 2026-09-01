@@ -7,6 +7,7 @@
 //
 
 import LoopKit
+import LoopCore
 import UIKit
 import Combine
 
@@ -52,6 +53,8 @@ public final class AlertManager {
 
     var analyticsServicesManager: AnalyticsServicesManager
 
+    private let automaticDosingStatus: AutomaticDosingStatus
+
     lazy private var cancellables = Set<AnyCancellable>()
 
     // For testing
@@ -65,10 +68,12 @@ public final class AlertManager {
                 expireAfter: TimeInterval = 24 /* hours */ * 60 /* minutes */ * 60 /* seconds */,
                 bluetoothProvider: BluetoothProvider,
                 analyticsServicesManager: AnalyticsServicesManager,
+                automaticDosingStatus: AutomaticDosingStatus = AutomaticDosingStatus(automaticDosingEnabled: true, isAutomaticDosingAllowed: true),
                 preventIssuanceBeforePlayback: Bool = true
     ) {
         self.fileManager = fileManager
         self.analyticsServicesManager = analyticsServicesManager
+        self.automaticDosingStatus = automaticDosingStatus
         playbackFinished = !preventIssuanceBeforePlayback
         let documentsDirectory = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
         let alertStoreDirectory = documentsDirectory?.appendingPathComponent("AlertStore")
@@ -101,6 +106,18 @@ public final class AlertManager {
             .receive(on: RunLoop.main)
             .dropFirst()
             .sink(receiveValue: rescheduleMutedAlerts)
+            .store(in: &cancellables)
+
+        automaticDosingStatus.$automaticDosingEnabled
+            .removeDuplicates()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] enabled in
+                if enabled {
+                    self?.rescheduleLoopNotRunningNotifications()
+                } else {
+                    self?.cancelLoopNotRunningNotifications()
+                }
+            }
             .store(in: &cancellables)
     }
 
@@ -158,6 +175,12 @@ public final class AlertManager {
 
     // MARK: - Loop Not Running alerts
 
+    /// Multiples of the expected loop interval at which a loop failure is reported, and whether that
+    /// report is critical. At the default 5 minute interval these reproduce 20/40/60/120 minutes.
+    private static let loopNotRunningWarningMultipliers: [(multiplier: Double, isCritical: Bool)] = [
+        (4, false), (8, false), (12, true), (24, true)
+    ]
+
     func loopDidComplete(_ lastLoopDate: Date? = nil) {
         // use now if there is no lastLoopDate
         rescheduleLoopNotRunningNotifications(lastLoopDate ?? Date())
@@ -173,14 +196,33 @@ public final class AlertManager {
         scheduleLoopNotRunningNotifications(lastLoopDate)
     }
 
+    /// Clears pending notifications and forgets them, so that `inferDeliveredLoopNotRunningNotifications()`
+    /// does not replay them into the alert store after closed loop is switched off.
+    private func cancelLoopNotRunningNotifications() {
+        clearLoopNotRunningNotifications()
+
+        UNUserNotificationCenter.current().getPendingNotificationRequests { requests in
+            let identifiers = requests
+                .filter { $0.content.categoryIdentifier == LoopNotificationCategory.loopNotRunning.rawValue }
+                .map { $0.identifier }
+            UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
+        }
+
+        UserDefaults.appGroup?.loopNotRunningNotifications = []
+    }
+
     func scheduleLoopNotRunningNotifications(_ lastLoopDate: Date) {
+        // A loop that is not dosing cannot fail in a way the user needs to act on.
+        guard automaticDosingStatus.automaticDosingEnabled else { return }
+
         // Give a little extra time for a loop-in-progress to complete
         let gracePeriod = TimeInterval(minutes: 0.5)
+        let loopInterval = UserDefaults.appGroup?.effectiveLoopInterval ?? LoopCompletionFreshness.defaultLoopInterval
 
         var scheduledNotifications: [StoredLoopNotRunningNotification] = []
 
-        for (minutes, isCritical) in [(20.0, false), (40.0, false), (60.0, true), (120.0, true)] {
-            let warningInterval = TimeInterval(minutes: minutes)
+        for (multiplier, isCritical) in Self.loopNotRunningWarningMultipliers {
+            let warningInterval = loopInterval * multiplier
             let timeUntilNotification = lastLoopDate.addingTimeInterval(warningInterval).timeIntervalSinceNow
             guard timeUntilNotification >= 0 else { break }
 

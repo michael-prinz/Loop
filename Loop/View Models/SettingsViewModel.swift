@@ -54,6 +54,7 @@ public protocol SettingsViewModelDelegate: AnyObject {
     func dosingStrategyChanged(_: AutomaticDosingStrategy)
     func customLoopIntervalEnabledChanged(_: Bool)
     func customLoopIntervalChanged(_: TimeInterval)
+    func glucoseDisplayRangeChanged(_: GlucoseDisplayRange)
     func didTapIssueReport()
     var closedLoopDescriptiveText: String? { get }
 }
@@ -119,6 +120,18 @@ public class SettingsViewModel: ObservableObject {
     /// Largest selectable custom loop interval, in minutes.
     let maximumCustomLoopIntervalMinutes: Double = LoopSettings.maximumCustomLoopInterval.minutes
 
+    /// Above this the loop can no longer keep pump data fresh between syncs while closed loop is on.
+    var customLoopIntervalExceedsRecencyLimit: Bool {
+        customLoopIntervalEnabled && TimeInterval(minutes: customLoopIntervalMinutes) > LoopSettings.customLoopIntervalWarningThreshold
+    }
+
+    /// Glucose display thresholds in mg/dL, ordered urgent low < low < high < urgent high.
+    @Published var glucoseDisplayRange: GlucoseDisplayRange {
+        didSet {
+            delegate?.glucoseDisplayRangeChanged(glucoseDisplayRange)
+        }
+    }
+
     var showDeleteTestData: Bool {
         availableSupports.contains(where: { $0.showsDeleteTestDataUI })
     }
@@ -139,6 +152,7 @@ public class SettingsViewModel: ObservableObject {
                 automaticDosingStrategy: AutomaticDosingStrategy,
                 initialCustomLoopIntervalEnabled: Bool,
                 initialCustomLoopIntervalMinutes: Double,
+                initialGlucoseDisplayRange: GlucoseDisplayRange,
                 availableSupports: [SupportUI],
                 isOnboardingComplete: Bool,
                 therapySettingsViewModelDelegate: TherapySettingsViewModelDelegate?,
@@ -158,6 +172,7 @@ public class SettingsViewModel: ObservableObject {
         self.automaticDosingStrategy = automaticDosingStrategy
         self.customLoopIntervalEnabled = initialCustomLoopIntervalEnabled
         self.customLoopIntervalMinutes = initialCustomLoopIntervalMinutes
+        self.glucoseDisplayRange = initialGlucoseDisplayRange
         self.availableSupports = availableSupports
         self.isOnboardingComplete = isOnboardingComplete
         self.therapySettingsViewModelDelegate = therapySettingsViewModelDelegate
@@ -208,6 +223,7 @@ extension SettingsViewModel {
                                  automaticDosingStrategy: .automaticBolus,
                                  initialCustomLoopIntervalEnabled: false,
                                  initialCustomLoopIntervalMinutes: LoopSettings.defaultCustomLoopInterval.minutes,
+                                 initialGlucoseDisplayRange: GlucoseDisplayRange(),
                                  availableSupports: [],
                                  isOnboardingComplete: false,
                                  therapySettingsViewModelDelegate: nil,

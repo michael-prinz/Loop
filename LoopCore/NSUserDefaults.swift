@@ -24,6 +24,12 @@ extension UserDefaults {
         case LastMissedMealNotification = "com.loopkit.Loop.lastMissedMealNotification"
         case userRequestedLoopReset = "com.loopkit.Loop.userRequestedLoopReset"
         case liveActivity = "com.loopkit.Loop.liveActivity"
+        case customLoopIntervalEnabled = "com.loopkit.Loop.customLoopIntervalEnabled"
+        case customLoopInterval = "com.loopkit.Loop.customLoopInterval"
+        case glucoseDisplayUrgentLow = "com.loopkit.Loop.glucoseDisplayUrgentLow"
+        case glucoseDisplayLow = "com.loopkit.Loop.glucoseDisplayLow"
+        case glucoseDisplayHigh = "com.loopkit.Loop.glucoseDisplayHigh"
+        case glucoseDisplayUrgentHigh = "com.loopkit.Loop.glucoseDisplayUrgentHigh"
     }
 
     public static let appGroup = UserDefaults(suiteName: Bundle.main.appGroupSuiteName)
@@ -196,5 +202,68 @@ extension UserDefaults {
         removeObject(forKey: "com.loudnate.Naterade.InsulinSensitivitySchedule")
         removeObject(forKey: "com.loopkit.Loop.defaultRapidActingModel")
         removeObject(forKey: "com.loopkit.Loop.loopSettings")
+    }
+}
+
+
+// MARK: - Settings not carried by StoredSettings
+//
+// `StoredSettings` lives in LoopKit and cannot be extended here, so these fork-specific settings are
+// persisted in the app group instead. They are read back in `SettingsManager.loopSettings`.
+extension UserDefaults {
+    public var customLoopIntervalEnabled: Bool {
+        get {
+            bool(forKey: Key.customLoopIntervalEnabled.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.customLoopIntervalEnabled.rawValue)
+        }
+    }
+
+    public var customLoopInterval: TimeInterval {
+        get {
+            guard let interval = object(forKey: Key.customLoopInterval.rawValue) as? TimeInterval else {
+                return LoopSettings.defaultCustomLoopInterval
+            }
+            return LoopSettings.clampedCustomLoopInterval(interval)
+        }
+        set {
+            set(LoopSettings.clampedCustomLoopInterval(newValue), forKey: Key.customLoopInterval.rawValue)
+        }
+    }
+
+    /// Mirrors `LoopSettings.effectiveLoopInterval` for callers that have no access to `LoopSettings`.
+    public var effectiveLoopInterval: TimeInterval {
+        guard customLoopIntervalEnabled else {
+            return LoopCompletionFreshness.defaultLoopInterval
+        }
+        return customLoopInterval
+    }
+
+    public var glucoseDisplayUrgentLow: Double {
+        get { glucoseDisplayThreshold(.glucoseDisplayUrgentLow, default: LoopSettings.defaultGlucoseDisplayUrgentLow) }
+        set { set(newValue, forKey: Key.glucoseDisplayUrgentLow.rawValue) }
+    }
+
+    public var glucoseDisplayLow: Double {
+        get { glucoseDisplayThreshold(.glucoseDisplayLow, default: LoopSettings.defaultGlucoseDisplayLow) }
+        set { set(newValue, forKey: Key.glucoseDisplayLow.rawValue) }
+    }
+
+    public var glucoseDisplayHigh: Double {
+        get { glucoseDisplayThreshold(.glucoseDisplayHigh, default: LoopSettings.defaultGlucoseDisplayHigh) }
+        set { set(newValue, forKey: Key.glucoseDisplayHigh.rawValue) }
+    }
+
+    public var glucoseDisplayUrgentHigh: Double {
+        get { glucoseDisplayThreshold(.glucoseDisplayUrgentHigh, default: LoopSettings.defaultGlucoseDisplayUrgentHigh) }
+        set { set(newValue, forKey: Key.glucoseDisplayUrgentHigh.rawValue) }
+    }
+
+    private func glucoseDisplayThreshold(_ key: Key, default defaultValue: Double) -> Double {
+        guard let value = object(forKey: key.rawValue) as? Double else {
+            return defaultValue
+        }
+        return value
     }
 }

@@ -330,6 +330,13 @@ final class WatchDataManager: NSObject {
 
             dosingDecision.predictedGlucose = state.predictedGlucoseIncludingPendingInsulin ?? state.predictedGlucose
 
+            if let glucose = context.glucose {
+                context.glucoseDisplayTier = settings.glucoseDisplayTier(for: glucose)
+            }
+            if let eventual = context.predictedGlucose?.values.last {
+                context.eventualGlucoseDisplayTier = settings.glucoseDisplayTier(forPredicted: eventual.quantity, at: eventual.startDate)
+            }
+
             var preMealOverride = settings.preMealOverride
             if preMealOverride?.hasFinished() == true {
                 preMealOverride = nil

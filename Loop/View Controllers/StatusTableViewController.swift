@@ -1680,6 +1680,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
                                           automaticDosingStrategy: deviceManager.loopManager.settings.automaticDosingStrategy,
                                           initialCustomLoopIntervalEnabled: deviceManager.loopManager.settings.customLoopIntervalEnabled,
                                           initialCustomLoopIntervalMinutes: deviceManager.loopManager.settings.customLoopInterval.minutes,
+                                          initialGlucoseDisplayRange: deviceManager.loopManager.settings.glucoseDisplayRange,
                                           availableSupports: supportManager.availableSupports,
                                           isOnboardingComplete: onboardingManager.isComplete,
                                           therapySettingsViewModelDelegate: deviceManager,
@@ -1816,7 +1817,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
         if let error = error {
             let alertController = UIAlertController(with: error)
             let manualLoopAction = UIAlertAction(title: NSLocalizedString("Retry", comment: "The button text for attempting a manual loop"), style: .default, handler: { _ in
-                self.deviceManager.refreshDeviceData()
+                self.deviceManager.refreshDeviceData(forcePumpSync: true)
             })
             alertController.addAction(manualLoopAction)
             present(alertController, animated: true)
@@ -2291,7 +2292,13 @@ extension StatusTableViewController: SettingsViewModelDelegate {
 
     func customLoopIntervalChanged(_ interval: TimeInterval) {
         deviceManager.loopManager.mutateSettings { settings in
-            settings.customLoopInterval = min(max(interval, LoopSettings.minimumCustomLoopInterval), LoopSettings.maximumCustomLoopInterval)
+            settings.customLoopInterval = LoopSettings.clampedCustomLoopInterval(interval)
+        }
+    }
+
+    func glucoseDisplayRangeChanged(_ range: GlucoseDisplayRange) {
+        deviceManager.loopManager.mutateSettings { settings in
+            settings.glucoseDisplayRange = range
         }
     }
 

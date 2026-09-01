@@ -7,6 +7,7 @@
 //
 
 import XCTest
+import HealthKit
 import LoopCore
 import LoopKit
 
@@ -132,7 +133,7 @@ class LoopSettingsTests: XCTestCase {
     func testCustomLoopIntervalDefaults() {
         let settings = LoopSettings()
         XCTAssertFalse(settings.customLoopIntervalEnabled)
-        XCTAssertEqual(settings.customLoopInterval, LoopSettings.minimumCustomLoopInterval)
+        XCTAssertEqual(settings.customLoopInterval, LoopSettings.defaultCustomLoopInterval)
     }
 
     func testCustomLoopIntervalClampedOnDecode() {
@@ -142,5 +143,64 @@ class LoopSettingsTests: XCTestCase {
 
         raw["customLoopInterval"] = TimeInterval.minutes(1)
         XCTAssertEqual(LoopSettings(rawValue: raw)?.customLoopInterval, LoopSettings.minimumCustomLoopInterval)
+    }
+
+    // MARK: - Glucose display range
+
+    private func mgdL(_ value: Double) -> HKQuantity {
+        HKQuantity(unit: .milligramsPerDeciliter, doubleValue: value)
+    }
+
+    func testGlucoseDisplayRangeDefaults() {
+        let settings = LoopSettings()
+        XCTAssertEqual(settings.glucoseDisplayUrgentLow, 54)
+        XCTAssertEqual(settings.glucoseDisplayLow, 70)
+        XCTAssertEqual(settings.glucoseDisplayHigh, 180)
+        XCTAssertEqual(settings.glucoseDisplayUrgentHigh, 250)
+    }
+
+    func testGlucoseDisplayRangeRawValueRoundTrip() {
+        var settings = LoopSettings()
+        settings.glucoseDisplayRange = GlucoseDisplayRange(urgentLow: 60, low: 80, high: 160, urgentHigh: 300)
+
+        let restored = LoopSettings(rawValue: settings.rawValue)
+        XCTAssertEqual(restored?.glucoseDisplayRange, GlucoseDisplayRange(urgentLow: 60, low: 80, high: 160, urgentHigh: 300))
+    }
+
+    func testGlucoseDisplayRangeEnforcesOrdering() {
+        let range = GlucoseDisplayRange(urgentLow: 100, low: 70, high: 60, urgentHigh: 50)
+        XCTAssertEqual(range.urgentLow, 100)
+        XCTAssertEqual(range.low, 101)
+        XCTAssertEqual(range.high, 102)
+        XCTAssertEqual(range.urgentHigh, 103)
+    }
+
+    func testGlucoseDisplayTierBoundaries() {
+        let settings = LoopSettings()
+
+        XCTAssertEqual(settings.glucoseDisplayTier(for: mgdL(53)), .urgent)
+        XCTAssertEqual(settings.glucoseDisplayTier(for: mgdL(54)), .outOfRange)
+        XCTAssertEqual(settings.glucoseDisplayTier(for: mgdL(69)), .outOfRange)
+        XCTAssertEqual(settings.glucoseDisplayTier(for: mgdL(70)), .inRange)
+        XCTAssertEqual(settings.glucoseDisplayTier(for: mgdL(179)), .inRange)
+        XCTAssertEqual(settings.glucoseDisplayTier(for: mgdL(180)), .inRange)
+        XCTAssertEqual(settings.glucoseDisplayTier(for: mgdL(181)), .outOfRange)
+        XCTAssertEqual(settings.glucoseDisplayTier(for: mgdL(250)), .outOfRange)
+        XCTAssertEqual(settings.glucoseDisplayTier(for: mgdL(251)), .urgent)
+    }
+
+    func testPredictedGlucoseTierUsesCorrectionRange() {
+        var settings = LoopSettings()
+        settings.glucoseTargetRangeSchedule = GlucoseRangeSchedule(
+            unit: .milligramsPerDeciliter,
+            dailyItems: [RepeatingScheduleValue(startTime: 0, value: DoubleRange(minValue: 100, maxValue: 120))]
+        )
+
+        let date = Date()
+        XCTAssertEqual(settings.glucoseDisplayTier(forPredicted: mgdL(110), at: date), .inRange)
+        // Comfortably safe, but outside target: Loop does not expect to land in range.
+        XCTAssertEqual(settings.glucoseDisplayTier(forPredicted: mgdL(98), at: date), .outOfRange)
+        XCTAssertEqual(settings.glucoseDisplayTier(forPredicted: mgdL(53), at: date), .urgent)
+        XCTAssertEqual(settings.glucoseDisplayTier(forPredicted: mgdL(260), at: date), .urgent)
     }
 }

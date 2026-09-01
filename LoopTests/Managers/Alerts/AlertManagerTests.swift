@@ -7,6 +7,7 @@
 //
 
 import LoopKit
+import LoopCore
 import UserNotifications
 import XCTest
 @testable import Loop
@@ -457,6 +458,44 @@ class AlertManagerTests: XCTestCase {
     func testLoopDidCompleteRecordsNotifications() {
         alertManager.loopDidComplete()
         XCTAssertEqual(4, UserDefaults.appGroup?.loopNotRunningNotifications.count)
+    }
+
+    func testLoopDidCompleteRecordsNoNotificationsInOpenLoop() {
+        let openLoopAlertManager = AlertManager(alertPresenter: mockPresenter,
+                                               modalAlertScheduler: mockModalScheduler,
+                                               userNotificationAlertScheduler: mockUserNotificationScheduler,
+                                               fileManager: mockFileManager,
+                                               alertStore: mockAlertStore,
+                                               bluetoothProvider: MockBluetoothProvider(),
+                                               analyticsServicesManager: AnalyticsServicesManager(),
+                                               automaticDosingStatus: AutomaticDosingStatus(automaticDosingEnabled: false, isAutomaticDosingAllowed: true),
+                                               preventIssuanceBeforePlayback: false)
+
+        openLoopAlertManager.loopDidComplete()
+        XCTAssertEqual(0, UserDefaults.appGroup?.loopNotRunningNotifications.count)
+    }
+
+    func testLoopNotRunningWarningsScaleWithLoopInterval() {
+        UserDefaults.appGroup?.customLoopIntervalEnabled = true
+        UserDefaults.appGroup?.customLoopInterval = .minutes(15)
+        defer {
+            UserDefaults.appGroup?.customLoopIntervalEnabled = false
+            UserDefaults.appGroup?.customLoopInterval = LoopSettings.defaultCustomLoopInterval
+        }
+
+        alertManager.loopDidComplete()
+        XCTAssertEqual(4, UserDefaults.appGroup?.loopNotRunningNotifications.count)
+
+        // At a 15 minute interval the first warning is due after 60 rather than 20 minutes.
+        alertManager.getCurrentDate = { return Date().addingTimeInterval(.minutes(30)) }
+        alertManager.inferDeliveredLoopNotRunningNotifications()
+        XCTAssertEqual(4, UserDefaults.appGroup?.loopNotRunningNotifications.count)
+        XCTAssertNil(mockAlertStore.issuedAlert)
+
+        alertManager.getCurrentDate = { return Date().addingTimeInterval(.minutes(65)) }
+        alertManager.inferDeliveredLoopNotRunningNotifications()
+        XCTAssertEqual(3, UserDefaults.appGroup?.loopNotRunningNotifications.count)
+        XCTAssertNotNil(mockAlertStore.issuedAlert)
     }
 
     func testLoopFailureFor10MinutesDoesNotRecordAlert() {

@@ -200,13 +200,17 @@ extension SettingsView {
     @ViewBuilder
     private var customLoopIntervalControls: some View {
         Toggle(isOn: $viewModel.customLoopIntervalEnabled) {
-            Text("Custom Loop Interval", comment: "The title text for the custom loop interval switch cell")
-                .padding(.vertical, 3)
+            VStack(alignment: .leading) {
+                Text("Pod Communication Interval", comment: "The title text for the pod communication interval switch cell")
+                    .padding(.vertical, 3)
+                DescriptiveText(label: NSLocalizedString("Applies while Closed Loop is on. With Closed Loop off the pod is not contacted in the background at all.", comment: "The description text for the pod communication interval switch cell"))
+            }
+            .fixedSize(horizontal: false, vertical: true)
         }
 
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text("Loop Interval", comment: "The label for the custom loop interval picker")
+                Text("Communication Interval", comment: "The label for the pod communication interval picker")
                 Spacer()
                 Text(String(format: NSLocalizedString("%d min", comment: "Custom loop interval value in minutes (1: number of minutes)"), Int(viewModel.customLoopIntervalMinutes.rounded())))
                     .foregroundColor(.secondary)
@@ -219,6 +223,11 @@ extension SettingsView {
             }
             .pickerStyle(.wheel)
             .labelsHidden()
+
+            if viewModel.customLoopIntervalExceedsRecencyLimit {
+                DescriptiveText(label: NSLocalizedString("Above 13 minutes some closed loop cycles will report that pump data is too old, and no dose will be enacted for that cycle.", comment: "Warning shown when the pod communication interval exceeds the pump data recency limit"))
+                    .foregroundColor(guidanceColors.warning)
+            }
         }
         .padding(.vertical, 3)
         .disabled(!viewModel.customLoopIntervalEnabled)
@@ -308,6 +317,13 @@ extension SettingsView {
                             descriptiveText: NSLocalizedString("Diabetes Treatment", comment: "Descriptive text for Therapy Settings"))
             }
 
+            NavigationLink(destination: glucoseDisplayRangeView) {
+                VStack(alignment: .leading) {
+                    Text(NSLocalizedString("Glucose Display Range", comment: "Title text for the glucose display range editor"))
+                    DescriptiveText(label: NSLocalizedString("Colors on the watch complication", comment: "Descriptive text for the glucose display range editor"))
+                }
+            }
+
             ForEach(pluginMenuItems.filter {$0.section == .configuration}) { item in
                 item.view
             }
@@ -316,6 +332,11 @@ extension SettingsView {
                 algorithmExperimentsSection
             }
         }
+    }
+
+    private var glucoseDisplayRangeView: some View {
+        GlucoseDisplayRangeEditorView(range: $viewModel.glucoseDisplayRange)
+            .environmentObject(displayGlucosePreference)
     }
 
     private var pluginMenuItems: [PluginMenuItem<some View>] {
@@ -648,6 +669,57 @@ fileprivate struct LargeButton<Content: View, SecondaryContent: View>: View {
             }
             .padding(EdgeInsets(top: topBottomPadding, leading: 0, bottom: topBottomPadding, trailing: 0))
         }
+    }
+}
+
+struct GlucoseDisplayRangeEditorView: View {
+    @EnvironmentObject private var displayGlucosePreference: DisplayGlucosePreference
+
+    @Binding var range: GlucoseDisplayRange
+
+    var body: some View {
+        List {
+            Section(footer: DescriptiveText(label: NSLocalizedString("These thresholds color the glucose value on the watch complication. They do not affect dosing or the correction range.", comment: "Footer for the glucose display range editor"))) {
+                row(NSLocalizedString("Urgent Low", comment: "Glucose display range urgent low threshold label"), value: $range.urgentLow)
+                row(NSLocalizedString("Low", comment: "Glucose display range low threshold label"), value: $range.low)
+                row(NSLocalizedString("High", comment: "Glucose display range high threshold label"), value: $range.high)
+                row(NSLocalizedString("Urgent High", comment: "Glucose display range urgent high threshold label"), value: $range.urgentHigh)
+            }
+        }
+        .insetGroupedListStyle()
+        .navigationBarTitle(Text(NSLocalizedString("Glucose Display Range", comment: "Title text for the glucose display range editor")))
+    }
+
+    /// One display-unit step: 1 mg/dL, or 0.1 mmol/L expressed in mg/dL.
+    private var step: Double {
+        displayGlucosePreference.unit == .millimolesPerLiter
+            ? HKQuantity(unit: .millimolesPerLiter, doubleValue: 0.1).doubleValue(for: .milligramsPerDeciliter)
+            : 1
+    }
+
+    private func row(_ label: String, value: Binding<Double>) -> some View {
+        Stepper(value: stepperBinding(for: value), step: step) {
+            HStack {
+                Text(label)
+                Spacer()
+                Text(displayGlucosePreference.format(HKQuantity(unit: .milligramsPerDeciliter, doubleValue: value.wrappedValue)))
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+
+    // Re-initializing GlucoseDisplayRange re-applies the ordering constraints after every step.
+    private func stepperBinding(for value: Binding<Double>) -> Binding<Double> {
+        Binding(
+            get: { value.wrappedValue },
+            set: { newValue in
+                value.wrappedValue = newValue
+                range = GlucoseDisplayRange(urgentLow: range.urgentLow,
+                                            low: range.low,
+                                            high: range.high,
+                                            urgentHigh: range.urgentHigh)
+            }
+        )
     }
 }
 

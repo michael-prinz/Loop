@@ -9,6 +9,7 @@
 import Foundation
 import HealthKit
 import LoopKit
+import LoopCore
 
 
 final class WatchContext: RawRepresentable {
@@ -33,6 +34,10 @@ final class WatchContext: RawRepresentable {
     var eventualGlucose: HKQuantity? {
         return predictedGlucose?.values.last?.quantity
     }
+
+    /// Precomputed on the phone so the watch never evaluates thresholds or the correction range itself.
+    var glucoseDisplayTier: GlucoseDisplayTier?
+    var eventualGlucoseDisplayTier: GlucoseDisplayTier?
 
     var loopLastRunDate: Date?
     var loopInterval: TimeInterval?
@@ -103,6 +108,13 @@ final class WatchContext: RawRepresentable {
         if let rawValue = rawValue["pg"] as? WatchPredictedGlucose.RawValue {
             predictedGlucose = WatchPredictedGlucose(rawValue: rawValue)
         }
+
+        if let rawTier = rawValue["gdt"] as? GlucoseDisplayTier.RawValue {
+            glucoseDisplayTier = GlucoseDisplayTier(rawValue: rawTier)
+        }
+        if let rawTier = rawValue["egdt"] as? GlucoseDisplayTier.RawValue {
+            eventualGlucoseDisplayTier = GlucoseDisplayTier(rawValue: rawTier)
+        }
     }
 
     var rawValue: RawValue {
@@ -135,6 +147,8 @@ final class WatchContext: RawRepresentable {
         raw["gdo"] = glucoseIsDisplayOnly
         raw["gue"] = glucoseWasUserEntered
         raw["gs"] = glucoseSyncIdentifier
+        raw["gdt"] = glucoseDisplayTier?.rawValue
+        raw["egdt"] = eventualGlucoseDisplayTier?.rawValue
         raw["iob"] = iob
         raw["ld"] = loopLastRunDate
         raw["li"] = loopInterval

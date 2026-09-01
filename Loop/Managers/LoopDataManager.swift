@@ -1235,7 +1235,8 @@ extension LoopDataManager {
         potentialCarbEntry: NewCarbEntry? = nil,
         replacingCarbEntry replacedCarbEntry: StoredCarbEntry? = nil,
         includingPendingInsulin: Bool = false,
-        includingPositiveVelocityAndRC: Bool = true
+        includingPositiveVelocityAndRC: Bool = true,
+        enforcingPumpDataRecency: Bool = true
     ) throws -> [PredictedGlucoseValue] {
         dispatchPrecondition(condition: .onQueue(dataAccessQueue))
 
@@ -1254,7 +1255,7 @@ extension LoopDataManager {
             throw LoopError.invalidFutureGlucose(date: lastGlucoseDate)
         }
 
-        guard now().timeIntervalSince(pumpStatusDate) <= LoopCoreConstants.inputDataRecencyInterval else {
+        guard !enforcingPumpDataRecency || now().timeIntervalSince(pumpStatusDate) <= LoopCoreConstants.inputDataRecencyInterval else {
             throw LoopError.pumpDataTooOld(date: pumpStatusDate)
         }
 
@@ -1708,6 +1709,11 @@ extension LoopDataManager {
         }
 
         var errors = [LoopError]()
+        var warnings = [LoopWarning]()
+
+        // In open loop nothing is enacted and the pump is deliberately left alone, so stale pump data must
+        // not abort the cycle; IOB still reflects every dose Loop itself commanded.
+        let enforcePumpDataRecency = automaticDosingStatus.automaticDosingEnabled
 
         if startDate.timeIntervalSince(glucose.startDate) > LoopCoreConstants.inputDataRecencyInterval {
             errors.append(.glucoseTooOld(date: glucose.startDate))
@@ -1720,7 +1726,11 @@ extension LoopDataManager {
         let pumpStatusDate = doseStore.lastAddedPumpData
 
         if startDate.timeIntervalSince(pumpStatusDate) > LoopCoreConstants.inputDataRecencyInterval {
-            errors.append(.pumpDataTooOld(date: pumpStatusDate))
+            if enforcePumpDataRecency {
+                errors.append(.pumpDataTooOld(date: pumpStatusDate))
+            } else {
+                warnings.append(.pumpDataTooOldInOpenLoop(date: pumpStatusDate))
+            }
         }
 
         let glucoseTargetRange = settings.effectiveGlucoseTargetRangeSchedule()
@@ -1772,6 +1782,7 @@ extension LoopDataManager {
             errors.append(.missingDataError(.activeInsulin))
         }
 
+        dosingDecision.appendWarnings(warnings)
         dosingDecision.appendErrors(errors)
         if let error = errors.first {
             logger.error("%{public}@", String(describing: error))
@@ -1780,9 +1791,9 @@ extension LoopDataManager {
 
         var loopError: LoopError?
         do {
-            let predictedGlucose = try predictGlucose(using: settings.enabledEffects)
+            let predictedGlucose = try predictGlucose(using: settings.enabledEffects, enforcingPumpDataRecency: enforcePumpDataRecency)
             self.predictedGlucose = predictedGlucose
-            let predictedGlucoseIncludingPendingInsulin = try predictGlucose(using: settings.enabledEffects, includingPendingInsulin: true)
+            let predictedGlucoseIncludingPendingInsulin = try predictGlucose(using: settings.enabledEffects, includingPendingInsulin: true, enforcingPumpDataRecency: enforcePumpDataRecency)
             self.predictedGlucoseIncludingPendingInsulin = predictedGlucoseIncludingPendingInsulin
 
             dosingDecision.predictedGlucose = predictedGlucose

@@ -702,7 +702,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ vor"
+            "value" : "vor %1$@"
           }
         },
         "es" : {
@@ -779,7 +779,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vor %1$@ am %2$@"
+            "value" : "vor %1$@ um %2$@"
           }
         },
         "es" : {
@@ -862,7 +862,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ in %2$@"
+            "value" : "%1$@ um %2$@"
           }
         },
         "es" : {
@@ -981,7 +981,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ Einheiten pro Stunde in %2$@"
+            "value" : "%1$@ Einheiten pro Stunde um %2$@"
           }
         },
         "es" : {
@@ -2082,7 +2082,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Loop wurde nicht erfolgreich abgeschlossen seit %@"
+            "value" : "Letzter abgeschlossener Loop %1$@."
           }
         },
         "es" : {
@@ -2284,7 +2284,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Loop lief seit %@"
+            "value" : "Loop lief vor %@"
           }
         },
         "es" : {
@@ -3641,7 +3641,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zuletzt abgeschlossen %1$@"
+            "value" : "war um %1$@"
           }
         },
         "es" : {

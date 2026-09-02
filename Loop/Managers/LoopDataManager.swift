@@ -1182,7 +1182,7 @@ extension LoopDataManager {
             return (dosingDecision, nil)
         }
 
-        return updatePredictedGlucoseAndRecommendedDose(with: dosingDecision)
+        return updatePredictedGlucoseAndRecommendedDose(with: dosingDecision, enactingAutomaticDose: enactingAutomaticDose)
     }
 
     private func notify(forChange context: LoopUpdateContext) {
@@ -1700,7 +1700,7 @@ extension LoopDataManager {
     ///     - LoopError.invalidFutureGlucose
     ///     - LoopError.missingDataError
     ///     - LoopError.pumpDataTooOld
-    private func updatePredictedGlucoseAndRecommendedDose(with dosingDecision: StoredDosingDecision) -> (StoredDosingDecision, LoopError?) {
+    private func updatePredictedGlucoseAndRecommendedDose(with dosingDecision: StoredDosingDecision, enactingAutomaticDose: Bool = true) -> (StoredDosingDecision, LoopError?) {
         dispatchPrecondition(condition: .onQueue(dataAccessQueue))
 
         var dosingDecision = dosingDecision

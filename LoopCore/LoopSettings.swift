@@ -85,7 +85,7 @@ public struct LoopSettings: Equatable {
     public static let defaultCustomLoopInterval: TimeInterval = .minutes(15)
 
     /// Interval above which the loop can no longer keep pump data within `inputDataRecencyInterval`
-    /// between syncs, so closed-loop cycles may report `pumpDataTooOld`.
+    /// between syncs, so insulin adjustments are noticeably delayed.
     public static let customLoopIntervalWarningThreshold: TimeInterval = .minutes(13)
 
     public static func clampedCustomLoopInterval(_ interval: TimeInterval) -> TimeInterval {
@@ -93,7 +93,8 @@ public struct LoopSettings: Equatable {
     }
 
     /// When `true`, pump communication is throttled to `customLoopInterval`. The loop cycle itself keeps
-    /// running on every CGM reading.
+    /// running on every CGM reading, but automatic doses are only enacted on cycles that are allowed to
+    /// communicate with the pump.
     public var customLoopIntervalEnabled = false
 
     /// User-configured pump communication interval, applied when `customLoopIntervalEnabled` is `true`. Clamped to `minimumCustomLoopInterval...maximumCustomLoopInterval`.

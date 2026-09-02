@@ -843,14 +843,17 @@ extension LoopDataManager {
     /// Executes an analysis of the current data, and recommends an adjustment to the current
     /// temporary basal rate.
     ///
-    func loop() {
+    /// - Parameter enactingAutomaticDose: When `false`, the cycle only updates predictions and
+    ///   recommendations; the recommended dose is not sent to the pump. Callers use this to keep pump
+    ///   communication within the configured loop interval.
+    func loop(enactingAutomaticDose: Bool = true) {
 
         if let lastLoopCompleted, Date().timeIntervalSince(lastLoopCompleted) < .minutes(2) {
             print("Looping too fast!")
         }
 
         let available = loopLock.withLockIfAvailable {
-            loopInternal()
+            loopInternal(enactingAutomaticDose: enactingAutomaticDose)
             return true
         }
         if available == nil {
@@ -858,7 +861,7 @@ extension LoopDataManager {
         }
     }
 
-    func loopInternal() {
+    func loopInternal(enactingAutomaticDose: Bool = true) {
         
         dataAccessQueue.async {
 
@@ -883,10 +886,14 @@ extension LoopDataManager {
             self.lastLoopError = nil
             let startDate = self.now()
 
-            var (dosingDecision, error) = self.update(for: .loop)
+            var (dosingDecision, error) = self.update(for: .loop, enactingAutomaticDose: enactingAutomaticDose)
 
             if error == nil, self.automaticDosingStatus.automaticDosingEnabled == true {
-                error = self.enactRecommendedAutomaticDose()
+                if enactingAutomaticDose {
+                    error = self.enactRecommendedAutomaticDose()
+                } else {
+                    self.logger.default("Not adjusting dosing; deferring to the next loop interval cycle.")
+                }
             } else {
                 self.logger.default("Not adjusting dosing during open loop.")
             }
@@ -960,7 +967,7 @@ extension LoopDataManager {
         case updateRemoteRecommendation
     }
 
-    fileprivate func update(for reason: UpdateReason) -> (StoredDosingDecision, LoopError?) {
+    fileprivate func update(for reason: UpdateReason, enactingAutomaticDose: Bool = true) -> (StoredDosingDecision, LoopError?) {
         dispatchPrecondition(condition: .onQueue(dataAccessQueue))
 
         var dosingDecision = StoredDosingDecision(reason: reason.rawValue)
@@ -1711,9 +1718,10 @@ extension LoopDataManager {
         var errors = [LoopError]()
         var warnings = [LoopWarning]()
 
-        // In open loop nothing is enacted and the pump is deliberately left alone, so stale pump data must
-        // not abort the cycle; IOB still reflects every dose Loop itself commanded.
-        let enforcePumpDataRecency = automaticDosingStatus.automaticDosingEnabled
+        // When nothing is enacted the pump is deliberately left alone, so stale pump data must not abort
+        // the cycle; IOB still reflects every dose Loop itself commanded. This covers open loop as well as
+        // closed-loop cycles that fall between pump communication intervals.
+        let enforcePumpDataRecency = automaticDosingStatus.automaticDosingEnabled && enactingAutomaticDose
 
         if startDate.timeIntervalSince(glucose.startDate) > LoopCoreConstants.inputDataRecencyInterval {
             errors.append(.glucoseTooOld(date: glucose.startDate))

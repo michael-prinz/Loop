@@ -590,15 +590,20 @@ final class DeviceDataManager {
             return
         }
 
-        guard let pumpManager = pumpManager, isPumpDataRefreshDue else {
-            self.log.default("Running loop without pump sync; pump data is %{public}.0f s old", Date().timeIntervalSince(doseStore.lastAddedPumpData))
-            self.loopManager.loop()
+        let pumpSyncDue = isPumpDataRefreshDue
+        // Enacting a dose is pump communication, so it may never happen off-cycle: the custom loop interval
+        // takes precedence and dosing waits for the cycle that is allowed to talk to the pump.
+        let mayEnactAutomaticDose = pumpSyncDue || !loopManager.settings.customLoopIntervalEnabled
+
+        guard let pumpManager = pumpManager, pumpSyncDue else {
+            self.log.default("Running loop without pump sync; pump data is %{public}.0f s old, dosing %{public}@", Date().timeIntervalSince(doseStore.lastAddedPumpData), mayEnactAutomaticDose ? "allowed" : "deferred")
+            self.loopManager.loop(enactingAutomaticDose: mayEnactAutomaticDose)
             return
         }
 
         self.log.default("Asserting current pump data; pump data is %{public}.0f s old", Date().timeIntervalSince(doseStore.lastAddedPumpData))
         pumpManager.ensureCurrentPumpData { _ in
-            self.loopManager.loop()
+            self.loopManager.loop(enactingAutomaticDose: true)
         }
     }
 
@@ -966,7 +971,8 @@ extension DeviceDataManager {
     }
 
     /// The minimum interval between loop cycles triggered by new CGM data. The loop cycle is never throttled
-    /// beyond the CGM cadence; only pump communication honors `pumpDataRefreshInterval`.
+    /// beyond the CGM cadence; only pump communication — including enacting doses — honors
+    /// `pumpDataRefreshInterval`.
     private var loopTriggerInterval: TimeInterval { .minutes(4.2) }
 
     /// Minimum age of stored pump data before a background pump sync is performed, or `nil` when background

@@ -226,7 +226,7 @@ extension SettingsView {
             .labelsHidden()
 
             if viewModel.customLoopIntervalExceedsRecencyLimit {
-                DescriptiveText(label: NSLocalizedString("Above 13 minutes some closed loop cycles will report that pump data is too old, and no dose will be enacted for that cycle.", comment: "Warning shown when the pod communication interval exceeds the pump data recency limit"))
+                DescriptiveText(label: NSLocalizedString("Above 13 minutes the pod is contacted less often than pump data stays fresh, so insulin adjustments are noticeably delayed. Doses are always deferred to the next communication interval.", comment: "Warning shown when the pod communication interval exceeds the pump data recency limit"))
                     .foregroundColor(guidanceColors.warning)
             }
         }
@@ -681,10 +681,11 @@ struct GlucoseDisplayRangeEditorView: View {
     var body: some View {
         List {
             Section(footer: DescriptiveText(label: NSLocalizedString("These thresholds color the glucose value on the watch complication. They do not affect dosing or the correction range.", comment: "Footer for the glucose display range editor"))) {
-                row(NSLocalizedString("Urgent Low", comment: "Glucose display range urgent low threshold label"), value: $range.urgentLow)
-                row(NSLocalizedString("Low", comment: "Glucose display range low threshold label"), value: $range.low)
-                row(NSLocalizedString("High", comment: "Glucose display range high threshold label"), value: $range.high)
-                row(NSLocalizedString("Urgent High", comment: "Glucose display range urgent high threshold label"), value: $range.urgentHigh)
+                // Deliberately untranslated: these match the complication colour tiers by name.
+                row("Urgent Low", value: $range.urgentLow)
+                row("Low", value: $range.low)
+                row("High", value: $range.high)
+                row("Urgent High", value: $range.urgentHigh)
             }
         }
         .insetGroupedListStyle()

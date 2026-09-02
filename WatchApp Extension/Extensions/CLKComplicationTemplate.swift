@@ -258,12 +258,8 @@ extension CLKComplicationTemplate {
 
         var providers: [CLKTextProvider] = [glucoseText]
 
-        // Without the eventual value there is nothing to separate, so keep the ticking "time ago" instead.
+        // Without the eventual value there is nothing to show after the glucose, so keep the ticking "time ago" instead.
         if let eventualGlucose, let eventualString = formatter.string(from: eventualGlucose.doubleValue(for: unit)) {
-            let separator = CLKSimpleTextProvider(text: "→")
-            separator.tintColor = freshnessColor
-            providers.append(separator)
-
             let eventualText = CLKSimpleTextProvider(text: eventualString)
             eventualText.tintColor = eventualGlucoseDisplayTier?.complicationColor ?? freshnessColor
             providers.append(eventualText)
@@ -271,15 +267,27 @@ extension CLKComplicationTemplate {
             providers.append(fallbackTimeText)
         }
 
-        if let activeInsulin, let insulinString = complicationInsulinFormatter.string(from: activeInsulin) {
-            providers.append(CLKSimpleTextProvider(text: insulinString))
+        if let activeInsulin, let insulinString = compactString(from: activeInsulin, formatter: complicationInsulinFormatter) {
+            let insulinText = CLKSimpleTextProvider(text: insulinString)
+            insulinText.tintColor = .white
+            providers.append(insulinText)
         }
 
-        if let activeCarbohydrates, let carbString = complicationCarbFormatter.string(from: activeCarbohydrates) {
-            providers.append(CLKSimpleTextProvider(text: carbString))
+        if let activeCarbohydrates, let carbString = compactString(from: activeCarbohydrates, formatter: complicationCarbFormatter) {
+            let carbText = CLKSimpleTextProvider(text: carbString)
+            carbText.tintColor = .white
+            providers.append(carbText)
         }
 
         return CLKTextProvider(byJoining: providers, separator: " ")
+    }
+
+    /// Value and unit without the usual separating space, to save room on the complication.
+    private static func compactString(from quantity: HKQuantity, formatter: QuantityFormatter) -> String? {
+        guard let value = formatter.string(from: quantity, includeUnit: false) else {
+            return nil
+        }
+        return value + formatter.localizedUnitStringWithPlurality(forQuantity: quantity, avoidLineBreaking: false)
     }
 }
 

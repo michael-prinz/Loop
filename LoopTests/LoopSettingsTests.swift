@@ -145,6 +145,19 @@ class LoopSettingsTests: XCTestCase {
         XCTAssertEqual(LoopSettings(rawValue: raw)?.customLoopInterval, LoopSettings.minimumCustomLoopInterval)
     }
 
+    func testSuppressPodCommunicationInBackgroundRawValueRoundTrip() {
+        var settings = LoopSettings()
+        settings.suppressPodCommunicationInBackground = true
+
+        let restored = LoopSettings(rawValue: settings.rawValue)
+        XCTAssertEqual(restored?.suppressPodCommunicationInBackground, true)
+    }
+
+    func testSuppressPodCommunicationInBackgroundDefaults() {
+        let settings = LoopSettings()
+        XCTAssertFalse(settings.suppressPodCommunicationInBackground)
+    }
+
     // MARK: - Glucose display range
 
     private func mgdL(_ value: Double) -> HKQuantity {

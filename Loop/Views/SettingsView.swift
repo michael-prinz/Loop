@@ -200,14 +200,11 @@ extension SettingsView {
 
     @ViewBuilder
     private var customLoopIntervalControls: some View {
-        Toggle(isOn: $viewModel.customLoopIntervalEnabled) {
-            VStack(alignment: .leading) {
-                Text("Pod Communication Interval", comment: "The title text for the pod communication interval switch cell")
-                    .padding(.vertical, 3)
-                DescriptiveText(label: NSLocalizedString("Applies while Closed Loop is on. With Closed Loop off the pod is not contacted in the background at all.", comment: "The description text for the pod communication interval switch cell"))
-            }
-            .fixedSize(horizontal: false, vertical: true)
-        }
+        describedToggle(
+            isOn: $viewModel.customLoopIntervalEnabled,
+            title: Text("Enable Custom Loop Interval", comment: "The title text for the custom loop interval switch cell"),
+            description: NSLocalizedString("When on, automatic pod communication is limited to at most once per the communication interval below. Off keeps the standard loop cadence.", comment: "The description text for the custom loop interval switch cell")
+        )
 
         VStack(alignment: .leading, spacing: 4) {
             HStack {
@@ -226,12 +223,30 @@ extension SettingsView {
             .labelsHidden()
 
             if viewModel.customLoopIntervalExceedsRecencyLimit {
-                DescriptiveText(label: NSLocalizedString("Above 13 minutes the pod is contacted less often than pump data stays fresh, so insulin adjustments are noticeably delayed. Doses are always deferred to the next communication interval.", comment: "Warning shown when the pod communication interval exceeds the pump data recency limit"))
+                DescriptiveText(label: NSLocalizedString("Above 13 minutes the pod is contacted less often than pump data stays fresh, so a status refresh is performed right before a dose and insulin adjustments can lag up to the communication interval.", comment: "Warning shown when the pod communication interval exceeds the pump data recency limit"))
                     .foregroundColor(guidanceColors.warning)
             }
         }
         .padding(.vertical, 3)
         .disabled(!viewModel.customLoopIntervalEnabled)
+
+        describedToggle(
+            isOn: $viewModel.suppressPodCommunicationInBackground,
+            title: Text("Disable Pod Communication", comment: "The title text for the disable pod communication switch cell"),
+            description: NSLocalizedString("When on, routine pod communication is skipped while the app is in the background. A required automatic dose is still delivered.", comment: "The description text for the disable pod communication switch cell")
+        )
+    }
+
+    @ViewBuilder
+    private func describedToggle(isOn: Binding<Bool>, title: Text, description: String) -> some View {
+        Toggle(isOn: isOn) {
+            VStack(alignment: .leading) {
+                title
+                    .padding(.vertical, 3)
+                DescriptiveText(label: description)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        }
     }
     
     private var softwareUpdateSection: some View {

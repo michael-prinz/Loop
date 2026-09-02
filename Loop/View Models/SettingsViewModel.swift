@@ -54,6 +54,7 @@ public protocol SettingsViewModelDelegate: AnyObject {
     func dosingStrategyChanged(_: AutomaticDosingStrategy)
     func customLoopIntervalEnabledChanged(_: Bool)
     func customLoopIntervalChanged(_: TimeInterval)
+    func suppressPodCommunicationInBackgroundChanged(_: Bool)
     func glucoseDisplayRangeChanged(_: GlucoseDisplayRange)
     func didTapIssueReport()
     var closedLoopDescriptiveText: String? { get }
@@ -114,6 +115,12 @@ public class SettingsViewModel: ObservableObject {
         }
     }
 
+    @Published var suppressPodCommunicationInBackground: Bool {
+        didSet {
+            delegate?.suppressPodCommunicationInBackgroundChanged(suppressPodCommunicationInBackground)
+        }
+    }
+
     /// Smallest selectable custom loop interval, in minutes.
     let minimumCustomLoopIntervalMinutes: Double = LoopSettings.minimumCustomLoopInterval.minutes
 
@@ -152,6 +159,7 @@ public class SettingsViewModel: ObservableObject {
                 automaticDosingStrategy: AutomaticDosingStrategy,
                 initialCustomLoopIntervalEnabled: Bool,
                 initialCustomLoopIntervalMinutes: Double,
+                initialSuppressPodCommunicationInBackground: Bool,
                 initialGlucoseDisplayRange: GlucoseDisplayRange,
                 availableSupports: [SupportUI],
                 isOnboardingComplete: Bool,
@@ -172,6 +180,7 @@ public class SettingsViewModel: ObservableObject {
         self.automaticDosingStrategy = automaticDosingStrategy
         self.customLoopIntervalEnabled = initialCustomLoopIntervalEnabled
         self.customLoopIntervalMinutes = initialCustomLoopIntervalMinutes
+        self.suppressPodCommunicationInBackground = initialSuppressPodCommunicationInBackground
         self.glucoseDisplayRange = initialGlucoseDisplayRange
         self.availableSupports = availableSupports
         self.isOnboardingComplete = isOnboardingComplete
@@ -223,6 +232,7 @@ extension SettingsViewModel {
                                  automaticDosingStrategy: .automaticBolus,
                                  initialCustomLoopIntervalEnabled: false,
                                  initialCustomLoopIntervalMinutes: LoopSettings.defaultCustomLoopInterval.minutes,
+                                 initialSuppressPodCommunicationInBackground: false,
                                  initialGlucoseDisplayRange: GlucoseDisplayRange(),
                                  availableSupports: [],
                                  isOnboardingComplete: false,

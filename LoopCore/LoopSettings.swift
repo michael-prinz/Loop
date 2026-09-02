@@ -100,6 +100,10 @@ public struct LoopSettings: Equatable {
     /// User-configured pump communication interval, applied when `customLoopIntervalEnabled` is `true`. Clamped to `minimumCustomLoopInterval...maximumCustomLoopInterval`.
     public var customLoopInterval: TimeInterval = LoopSettings.defaultCustomLoopInterval
 
+    /// When `true`, routine (non-dose) pod communication is suppressed while the app is in the background.
+    /// Independent of `customLoopIntervalEnabled` and of closed loop; never blocks an automatic dose.
+    public var suppressPodCommunicationInBackground = false
+
     public static let defaultGlucoseDisplayUrgentLow: Double = 54
     public static let defaultGlucoseDisplayLow: Double = 70
     public static let defaultGlucoseDisplayHigh: Double = 180
@@ -136,6 +140,7 @@ public struct LoopSettings: Equatable {
         automaticDosingStrategy: AutomaticDosingStrategy = .tempBasalOnly,
         customLoopIntervalEnabled: Bool = false,
         customLoopInterval: TimeInterval = LoopSettings.defaultCustomLoopInterval,
+        suppressPodCommunicationInBackground: Bool = false,
         defaultRapidActingModel: ExponentialInsulinModelPreset? = nil
     ) {
         self.dosingEnabled = dosingEnabled
@@ -154,6 +159,7 @@ public struct LoopSettings: Equatable {
         self.automaticDosingStrategy = automaticDosingStrategy
         self.customLoopIntervalEnabled = customLoopIntervalEnabled
         self.customLoopInterval = customLoopInterval
+        self.suppressPodCommunicationInBackground = suppressPodCommunicationInBackground
         self.defaultRapidActingModel = defaultRapidActingModel
     }
 }
@@ -341,6 +347,10 @@ extension LoopSettings: RawRepresentable {
             self.customLoopInterval = LoopSettings.clampedCustomLoopInterval(customLoopInterval)
         }
 
+        if let suppressPodCommunicationInBackground = rawValue["suppressPodCommunicationInBackground"] as? Bool {
+            self.suppressPodCommunicationInBackground = suppressPodCommunicationInBackground
+        }
+
         if let value = rawValue["glucoseDisplayUrgentLow"] as? Double {
             self.glucoseDisplayUrgentLow = value
         }
@@ -373,6 +383,7 @@ extension LoopSettings: RawRepresentable {
         raw["dosingStrategy"] = automaticDosingStrategy.rawValue
         raw["customLoopIntervalEnabled"] = customLoopIntervalEnabled
         raw["customLoopInterval"] = customLoopInterval
+        raw["suppressPodCommunicationInBackground"] = suppressPodCommunicationInBackground
         raw["glucoseDisplayUrgentLow"] = glucoseDisplayUrgentLow
         raw["glucoseDisplayLow"] = glucoseDisplayLow
         raw["glucoseDisplayHigh"] = glucoseDisplayHigh

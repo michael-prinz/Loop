@@ -26,6 +26,7 @@ extension UserDefaults {
         case liveActivity = "com.loopkit.Loop.liveActivity"
         case customLoopIntervalEnabled = "com.loopkit.Loop.customLoopIntervalEnabled"
         case customLoopInterval = "com.loopkit.Loop.customLoopInterval"
+        case suppressPodCommunicationInBackground = "com.loopkit.Loop.suppressPodCommunicationInBackground"
         case glucoseDisplayUrgentLow = "com.loopkit.Loop.glucoseDisplayUrgentLow"
         case glucoseDisplayLow = "com.loopkit.Loop.glucoseDisplayLow"
         case glucoseDisplayHigh = "com.loopkit.Loop.glucoseDisplayHigh"
@@ -229,6 +230,15 @@ extension UserDefaults {
         }
         set {
             set(LoopSettings.clampedCustomLoopInterval(newValue), forKey: Key.customLoopInterval.rawValue)
+        }
+    }
+
+    public var suppressPodCommunicationInBackground: Bool {
+        get {
+            bool(forKey: Key.suppressPodCommunicationInBackground.rawValue)
+        }
+        set {
+            set(newValue, forKey: Key.suppressPodCommunicationInBackground.rawValue)
         }
     }
 

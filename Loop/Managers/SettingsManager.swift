@@ -115,6 +115,7 @@ class SettingsManager {
             if let defaults = UserDefaults.appGroup {
                 settings.customLoopIntervalEnabled = defaults.customLoopIntervalEnabled
                 settings.customLoopInterval = defaults.customLoopInterval
+                settings.suppressPodCommunicationInBackground = defaults.suppressPodCommunicationInBackground
                 settings.glucoseDisplayUrgentLow = defaults.glucoseDisplayUrgentLow
                 settings.glucoseDisplayLow = defaults.glucoseDisplayLow
                 settings.glucoseDisplayHigh = defaults.glucoseDisplayHigh
@@ -168,6 +169,7 @@ class SettingsManager {
         if let newLoopSettings, let defaults = UserDefaults.appGroup {
             defaults.customLoopIntervalEnabled = newLoopSettings.customLoopIntervalEnabled
             defaults.customLoopInterval = newLoopSettings.customLoopInterval
+            defaults.suppressPodCommunicationInBackground = newLoopSettings.suppressPodCommunicationInBackground
             defaults.glucoseDisplayUrgentLow = newLoopSettings.glucoseDisplayUrgentLow
             defaults.glucoseDisplayLow = newLoopSettings.glucoseDisplayLow
             defaults.glucoseDisplayHigh = newLoopSettings.glucoseDisplayHigh

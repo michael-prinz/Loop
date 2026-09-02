@@ -1680,6 +1680,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
                                           automaticDosingStrategy: deviceManager.loopManager.settings.automaticDosingStrategy,
                                           initialCustomLoopIntervalEnabled: deviceManager.loopManager.settings.customLoopIntervalEnabled,
                                           initialCustomLoopIntervalMinutes: deviceManager.loopManager.settings.customLoopInterval.minutes,
+                                          initialSuppressPodCommunicationInBackground: deviceManager.loopManager.settings.suppressPodCommunicationInBackground,
                                           initialGlucoseDisplayRange: deviceManager.loopManager.settings.glucoseDisplayRange,
                                           availableSupports: supportManager.availableSupports,
                                           isOnboardingComplete: onboardingManager.isComplete,
@@ -2293,6 +2294,12 @@ extension StatusTableViewController: SettingsViewModelDelegate {
     func customLoopIntervalChanged(_ interval: TimeInterval) {
         deviceManager.loopManager.mutateSettings { settings in
             settings.customLoopInterval = LoopSettings.clampedCustomLoopInterval(interval)
+        }
+    }
+
+    func suppressPodCommunicationInBackgroundChanged(_ enabled: Bool) {
+        deviceManager.loopManager.mutateSettings { settings in
+            settings.suppressPodCommunicationInBackground = enabled
         }
     }
 

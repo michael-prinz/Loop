@@ -861,6 +861,32 @@ extension LoopDataManager {
         }
     }
 
+    /// Reports whether the loop currently recommends an actionable automatic dose — a temp basal change or
+    /// an automatic bolus — without enacting it and without advancing loop-completion state.
+    ///
+    /// Pump-data recency is intentionally not enforced, so a recommendation is produced even when pump data
+    /// is stale (as happens during a long custom loop interval). This lets the caller decide whether
+    /// contacting the pump is warranted. The tolerant preview is discarded before returning so that the
+    /// subsequent real loop recomputes from scratch and re-applies the normal pump-data recency check
+    /// before any dose is enacted.
+    func isAutomaticDoseRecommended(_ completion: @escaping (_ isRecommended: Bool) -> Void) {
+        dataAccessQueue.async {
+            let (_, error) = self.update(for: .getLoopState, enactingAutomaticDose: false)
+
+            let isRecommended: Bool
+            if error == nil, self.lastRequestedBolus == nil, let recommendation = self.recommendedAutomaticDose?.recommendation {
+                isRecommended = recommendation.basalAdjustment != nil || (recommendation.bolusUnits ?? 0) > 0
+            } else {
+                isRecommended = false
+            }
+
+            // Discard the tolerant preview so the real loop recomputes and re-enforces pump-data recency.
+            self.clearCachedInsulinEffects()
+
+            completion(isRecommended)
+        }
+    }
+
     func loopInternal(enactingAutomaticDose: Bool = true) {
         
         dataAccessQueue.async {

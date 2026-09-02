@@ -263,6 +263,12 @@
     "Active Insulin (IOB)" : {
       "comment" : "Description for the Insulin On Board selection for the Live Activity configuration",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktives Insulin (IOB)"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -280,6 +286,12 @@
     "at" : {
       "comment" : "Label used for the Updated time value in the Live Activity view",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "um"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -421,6 +433,12 @@
     "COB" : {
       "comment" : "Label used for the Carbohydrates On Board value in the Live Activity view",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COB"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -504,6 +522,12 @@
     "Current Glucose (Value and Arrow)" : {
       "comment" : "Description for the Current Glucose selection for the Live Activity configuration",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aktueller Blutzucker (Wert und Pfeil)"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -544,6 +568,12 @@
     "Delta Glucose (Delta)" : {
       "comment" : "Description for the Delta Glucose selection for the Live Activity configuration",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blutzuckeränderung (Delta)"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -630,7 +660,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prognostizierter Glukosewert (Endgültiger Blutzuckerwert)"
+            "value" : "Prognostizierter Glukosewert (Voraussichtlicher Blutzuckerwert)"
           }
         },
         "ro" : {
@@ -769,6 +799,12 @@
     "Relative Basal Rate (Basal)" : {
       "comment" : "Description for the Basal Rate plot selection for the Live Activity configuration",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Relative Basalrate (Basal)"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -786,6 +822,12 @@
     "Row Only" : {
       "comment" : "Short name to choose the Lock Screen display without the plot",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nur Zeile"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",

@@ -843,14 +843,17 @@ extension LoopDataManager {
     /// Executes an analysis of the current data, and recommends an adjustment to the current
     /// temporary basal rate.
     ///
-    func loop() {
+    /// - Parameter enactingAutomaticDose: When `false`, the cycle only updates predictions and
+    ///   recommendations; the recommended dose is not sent to the pump. Callers use this to keep pump
+    ///   communication within the configured loop interval.
+    func loop(enactingAutomaticDose: Bool = true) {
 
         if let lastLoopCompleted, Date().timeIntervalSince(lastLoopCompleted) < .minutes(2) {
             print("Looping too fast!")
         }
 
         let available = loopLock.withLockIfAvailable {
-            loopInternal()
+            loopInternal(enactingAutomaticDose: enactingAutomaticDose)
             return true
         }
         if available == nil {
@@ -858,7 +861,33 @@ extension LoopDataManager {
         }
     }
 
-    func loopInternal() {
+    /// Reports whether the loop currently recommends an actionable automatic dose — a temp basal change or
+    /// an automatic bolus — without enacting it and without advancing loop-completion state.
+    ///
+    /// Pump-data recency is intentionally not enforced, so a recommendation is produced even when pump data
+    /// is stale (as happens during a long custom loop interval). This lets the caller decide whether
+    /// contacting the pump is warranted. The tolerant preview is discarded before returning so that the
+    /// subsequent real loop recomputes from scratch and re-applies the normal pump-data recency check
+    /// before any dose is enacted.
+    func isAutomaticDoseRecommended(_ completion: @escaping (_ isRecommended: Bool) -> Void) {
+        dataAccessQueue.async {
+            let (_, error) = self.update(for: .getLoopState, enactingAutomaticDose: false)
+
+            let isRecommended: Bool
+            if error == nil, self.lastRequestedBolus == nil, let recommendation = self.recommendedAutomaticDose?.recommendation {
+                isRecommended = recommendation.basalAdjustment != nil || (recommendation.bolusUnits ?? 0) > 0
+            } else {
+                isRecommended = false
+            }
+
+            // Discard the tolerant preview so the real loop recomputes and re-enforces pump-data recency.
+            self.clearCachedInsulinEffects()
+
+            completion(isRecommended)
+        }
+    }
+
+    func loopInternal(enactingAutomaticDose: Bool = true) {
         
         dataAccessQueue.async {
 
@@ -883,10 +912,14 @@ extension LoopDataManager {
             self.lastLoopError = nil
             let startDate = self.now()
 
-            var (dosingDecision, error) = self.update(for: .loop)
+            var (dosingDecision, error) = self.update(for: .loop, enactingAutomaticDose: enactingAutomaticDose)
 
             if error == nil, self.automaticDosingStatus.automaticDosingEnabled == true {
-                error = self.enactRecommendedAutomaticDose()
+                if enactingAutomaticDose {
+                    error = self.enactRecommendedAutomaticDose()
+                } else {
+                    self.logger.default("Not adjusting dosing; deferring to the next loop interval cycle.")
+                }
             } else {
                 self.logger.default("Not adjusting dosing during open loop.")
             }
@@ -960,7 +993,7 @@ extension LoopDataManager {
         case updateRemoteRecommendation
     }
 
-    fileprivate func update(for reason: UpdateReason) -> (StoredDosingDecision, LoopError?) {
+    fileprivate func update(for reason: UpdateReason, enactingAutomaticDose: Bool = true) -> (StoredDosingDecision, LoopError?) {
         dispatchPrecondition(condition: .onQueue(dataAccessQueue))
 
         var dosingDecision = StoredDosingDecision(reason: reason.rawValue)
@@ -1175,7 +1208,7 @@ extension LoopDataManager {
             return (dosingDecision, nil)
         }
 
-        return updatePredictedGlucoseAndRecommendedDose(with: dosingDecision)
+        return updatePredictedGlucoseAndRecommendedDose(with: dosingDecision, enactingAutomaticDose: enactingAutomaticDose)
     }
 
     private func notify(forChange context: LoopUpdateContext) {
@@ -1235,7 +1268,8 @@ extension LoopDataManager {
         potentialCarbEntry: NewCarbEntry? = nil,
         replacingCarbEntry replacedCarbEntry: StoredCarbEntry? = nil,
         includingPendingInsulin: Bool = false,
-        includingPositiveVelocityAndRC: Bool = true
+        includingPositiveVelocityAndRC: Bool = true,
+        enforcingPumpDataRecency: Bool = true
     ) throws -> [PredictedGlucoseValue] {
         dispatchPrecondition(condition: .onQueue(dataAccessQueue))
 
@@ -1254,7 +1288,7 @@ extension LoopDataManager {
             throw LoopError.invalidFutureGlucose(date: lastGlucoseDate)
         }
 
-        guard now().timeIntervalSince(pumpStatusDate) <= LoopCoreConstants.inputDataRecencyInterval else {
+        guard !enforcingPumpDataRecency || now().timeIntervalSince(pumpStatusDate) <= LoopCoreConstants.inputDataRecencyInterval else {
             throw LoopError.pumpDataTooOld(date: pumpStatusDate)
         }
 
@@ -1692,7 +1726,7 @@ extension LoopDataManager {
     ///     - LoopError.invalidFutureGlucose
     ///     - LoopError.missingDataError
     ///     - LoopError.pumpDataTooOld
-    private func updatePredictedGlucoseAndRecommendedDose(with dosingDecision: StoredDosingDecision) -> (StoredDosingDecision, LoopError?) {
+    private func updatePredictedGlucoseAndRecommendedDose(with dosingDecision: StoredDosingDecision, enactingAutomaticDose: Bool = true) -> (StoredDosingDecision, LoopError?) {
         dispatchPrecondition(condition: .onQueue(dataAccessQueue))
 
         var dosingDecision = dosingDecision
@@ -1708,6 +1742,12 @@ extension LoopDataManager {
         }
 
         var errors = [LoopError]()
+        var warnings = [LoopWarning]()
+
+        // When nothing is enacted the pump is deliberately left alone, so stale pump data must not abort
+        // the cycle; IOB still reflects every dose Loop itself commanded. This covers open loop as well as
+        // closed-loop cycles that fall between pump communication intervals.
+        let enforcePumpDataRecency = automaticDosingStatus.automaticDosingEnabled && enactingAutomaticDose
 
         if startDate.timeIntervalSince(glucose.startDate) > LoopCoreConstants.inputDataRecencyInterval {
             errors.append(.glucoseTooOld(date: glucose.startDate))
@@ -1720,7 +1760,11 @@ extension LoopDataManager {
         let pumpStatusDate = doseStore.lastAddedPumpData
 
         if startDate.timeIntervalSince(pumpStatusDate) > LoopCoreConstants.inputDataRecencyInterval {
-            errors.append(.pumpDataTooOld(date: pumpStatusDate))
+            if enforcePumpDataRecency {
+                errors.append(.pumpDataTooOld(date: pumpStatusDate))
+            } else {
+                warnings.append(.pumpDataTooOldInOpenLoop(date: pumpStatusDate))
+            }
         }
 
         let glucoseTargetRange = settings.effectiveGlucoseTargetRangeSchedule()
@@ -1772,6 +1816,7 @@ extension LoopDataManager {
             errors.append(.missingDataError(.activeInsulin))
         }
 
+        dosingDecision.appendWarnings(warnings)
         dosingDecision.appendErrors(errors)
         if let error = errors.first {
             logger.error("%{public}@", String(describing: error))
@@ -1780,9 +1825,9 @@ extension LoopDataManager {
 
         var loopError: LoopError?
         do {
-            let predictedGlucose = try predictGlucose(using: settings.enabledEffects)
+            let predictedGlucose = try predictGlucose(using: settings.enabledEffects, enforcingPumpDataRecency: enforcePumpDataRecency)
             self.predictedGlucose = predictedGlucose
-            let predictedGlucoseIncludingPendingInsulin = try predictGlucose(using: settings.enabledEffects, includingPendingInsulin: true)
+            let predictedGlucoseIncludingPendingInsulin = try predictGlucose(using: settings.enabledEffects, includingPendingInsulin: true, enforcingPumpDataRecency: enforcePumpDataRecency)
             self.predictedGlucoseIncludingPendingInsulin = predictedGlucoseIncludingPendingInsulin
 
             dosingDecision.predictedGlucose = predictedGlucose

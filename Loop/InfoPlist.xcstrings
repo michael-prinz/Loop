@@ -829,7 +829,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Mahlzeit-Daten aus der HealthKit-Datenbank werden verwendet, um Blutzuckereffekte zu bestimmen. Blutzuckerdaten aus der HealthKit-Datenbank werden für die Grafik- und Momentumberechnung verwendet."
+            "value" : "Mahlzeit-Daten aus der HealthKit-Datenbank werden verwendet, um Blutzuckereffekte zu bestimmen. Blutzuckerdaten aus der HealthKit-Datenbank werden für die Grafik- und Momentumberechnung verwendet. Schlafdaten aus der HealthKit-Datenbank werden verwendet, um die Bereitstellung von Apple Watch-Komplikationsupdates während Deiner Wachzeit zu optimieren."
           }
         },
         "en" : {
@@ -961,7 +961,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In der App und auf der Uhr eingegebene Daten zu Kohlenhydratmahlzeiten werden in der HealthKit-Datenbank gespeichert. Vom CGM abgerufene Glukosedaten werden sicher in HealthKit-Datenbank gespeichert."
+            "value" : "In der App und auf der Uhr eingegebene Daten zu Kohlenhydratmahlzeiten werden in der HealthKit-Datenbank gespeichert. Vom CGM abgerufene Glukosedaten werden sicher in der HealthKit-Datenbank gespeichert."
           }
         },
         "en" : {

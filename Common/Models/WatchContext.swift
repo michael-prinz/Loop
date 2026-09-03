@@ -9,6 +9,7 @@
 import Foundation
 import HealthKit
 import LoopKit
+import LoopCore
 
 
 final class WatchContext: RawRepresentable {
@@ -34,7 +35,12 @@ final class WatchContext: RawRepresentable {
         return predictedGlucose?.values.last?.quantity
     }
 
+    /// Precomputed on the phone so the watch never evaluates thresholds or the correction range itself.
+    var glucoseDisplayTier: GlucoseDisplayTier?
+    var eventualGlucoseDisplayTier: GlucoseDisplayTier?
+
     var loopLastRunDate: Date?
+    var loopInterval: TimeInterval?
     var lastNetTempBasalDose: Double?
     var lastNetTempBasalDate: Date?
     var recommendedBolusDose: Double?
@@ -88,6 +94,7 @@ final class WatchContext: RawRepresentable {
         batteryPercentage = rawValue["bp"] as? Double
 
         loopLastRunDate = rawValue["ld"] as? Date
+        loopInterval = rawValue["li"] as? TimeInterval
         lastNetTempBasalDose = rawValue["ba"] as? Double
         lastNetTempBasalDate = rawValue["bad"] as? Date
         recommendedBolusDose = rawValue["rbo"] as? Double
@@ -100,6 +107,13 @@ final class WatchContext: RawRepresentable {
 
         if let rawValue = rawValue["pg"] as? WatchPredictedGlucose.RawValue {
             predictedGlucose = WatchPredictedGlucose(rawValue: rawValue)
+        }
+
+        if let rawTier = rawValue["gdt"] as? GlucoseDisplayTier.RawValue {
+            glucoseDisplayTier = GlucoseDisplayTier(rawValue: rawTier)
+        }
+        if let rawTier = rawValue["egdt"] as? GlucoseDisplayTier.RawValue {
+            eventualGlucoseDisplayTier = GlucoseDisplayTier(rawValue: rawTier)
         }
     }
 
@@ -133,8 +147,11 @@ final class WatchContext: RawRepresentable {
         raw["gdo"] = glucoseIsDisplayOnly
         raw["gue"] = glucoseWasUserEntered
         raw["gs"] = glucoseSyncIdentifier
+        raw["gdt"] = glucoseDisplayTier?.rawValue
+        raw["egdt"] = eventualGlucoseDisplayTier?.rawValue
         raw["iob"] = iob
         raw["ld"] = loopLastRunDate
+        raw["li"] = loopInterval
         raw["r"] = reservoir
         raw["rbo"] = recommendedBolusDose
         raw["pce"] = potentialCarbEntry?.rawValue

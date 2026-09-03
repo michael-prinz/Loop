@@ -262,6 +262,7 @@ final class WatchDataManager: NSObject {
             let settings = self.deviceManager.loopManager.settings
 
             context.isClosedLoop = settings.dosingEnabled
+            context.loopInterval = settings.effectiveLoopInterval
 
             context.potentialCarbEntry = potentialCarbEntry
             if let recommendedBolus = try? state.recommendBolus(consideringPotentialCarbEntry: potentialCarbEntry, replacingCarbEntry: nil, considerPositiveVelocityAndRC: FeatureFlags.usePositiveMomentumAndRCForManualBoluses)
@@ -328,6 +329,13 @@ final class WatchDataManager: NSObject {
             }
 
             dosingDecision.predictedGlucose = state.predictedGlucoseIncludingPendingInsulin ?? state.predictedGlucose
+
+            if let glucose = context.glucose {
+                context.glucoseDisplayTier = settings.glucoseDisplayTier(for: glucose)
+            }
+            if let eventual = context.predictedGlucose?.values.last {
+                context.eventualGlucoseDisplayTier = settings.glucoseDisplayTier(forPredicted: eventual.quantity, at: eventual.startDate)
+            }
 
             var preMealOverride = settings.preMealOverride
             if preMealOverride?.hasFinished() == true {

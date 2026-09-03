@@ -7,6 +7,7 @@
 //
 
 import LoopKit
+import LoopCore
 import UserNotifications
 import XCTest
 @testable import Loop
@@ -118,14 +119,14 @@ class AlertManagerTests: XCTestCase {
     class MockAlertStore: AlertStore {
         
         var issuedAlert: Alert?
-        override public func recordIssued(alert: Alert, at date: Date = Date(), completion: ((Result<Void, Error>) -> Void)? = nil) {
+        override public func recordIssued(alert: Alert, at date: Date = Date(), completion: ((Swift.Result<Void, Error>) -> Void)? = nil) {
             issuedAlert = alert
             completion?(.success)
         }
 
         var retractedAlert: Alert?
         var retractedAlertDate: Date?
-        override public func recordRetractedAlert(_ alert: Alert, at date: Date, completion: ((Result<Void, Error>) -> Void)? = nil) {
+        override public func recordRetractedAlert(_ alert: Alert, at date: Date, completion: ((Swift.Result<Void, Error>) -> Void)? = nil) {
             retractedAlert = alert
             retractedAlertDate = date
             completion?(.success)
@@ -134,7 +135,7 @@ class AlertManagerTests: XCTestCase {
         var acknowledgedAlertIdentifier: Alert.Identifier?
         var acknowledgedAlertDate: Date?
         override public func recordAcknowledgement(of identifier: Alert.Identifier, at date: Date = Date(),
-                                                   completion: ((Result<Void, Error>) -> Void)? = nil) {
+                                                   completion: ((Swift.Result<Void, Error>) -> Void)? = nil) {
             acknowledgedAlertIdentifier = identifier
             acknowledgedAlertDate = date
             completion?(.success)
@@ -142,18 +143,18 @@ class AlertManagerTests: XCTestCase {
         
         var retractededAlertIdentifier: Alert.Identifier?
         override public func recordRetraction(of identifier: Alert.Identifier, at date: Date = Date(),
-                                              completion: ((Result<Void, Error>) -> Void)? = nil) {
+                                              completion: ((Swift.Result<Void, Error>) -> Void)? = nil) {
             retractededAlertIdentifier = identifier
             retractedAlertDate = date
             completion?(.success)
         }
 
         var storedAlerts = [StoredAlert]()
-        override public func lookupAllUnacknowledgedUnretracted(managerIdentifier: String? = nil, filteredByTriggers triggersStoredType: [AlertTriggerStoredType]? = nil, completion: @escaping (Result<[StoredAlert], Error>) -> Void) {
+        override public func lookupAllUnacknowledgedUnretracted(managerIdentifier: String? = nil, filteredByTriggers triggersStoredType: [AlertTriggerStoredType]? = nil, completion: @escaping (Swift.Result<[StoredAlert], Error>) -> Void) {
             completion(.success(storedAlerts))
         }
         
-        override public func lookupAllUnretracted(managerIdentifier: String?, completion: @escaping (Result<[StoredAlert], Error>) -> Void) {
+        override public func lookupAllUnretracted(managerIdentifier: String?, completion: @escaping (Swift.Result<[StoredAlert], Error>) -> Void) {
             completion(.success(storedAlerts))
         }
     }
@@ -457,6 +458,44 @@ class AlertManagerTests: XCTestCase {
     func testLoopDidCompleteRecordsNotifications() {
         alertManager.loopDidComplete()
         XCTAssertEqual(4, UserDefaults.appGroup?.loopNotRunningNotifications.count)
+    }
+
+    func testLoopDidCompleteRecordsNoNotificationsInOpenLoop() {
+        let openLoopAlertManager = AlertManager(alertPresenter: mockPresenter,
+                                               modalAlertScheduler: mockModalScheduler,
+                                               userNotificationAlertScheduler: mockUserNotificationScheduler,
+                                               fileManager: mockFileManager,
+                                               alertStore: mockAlertStore,
+                                               bluetoothProvider: MockBluetoothProvider(),
+                                               analyticsServicesManager: AnalyticsServicesManager(),
+                                               automaticDosingStatus: AutomaticDosingStatus(automaticDosingEnabled: false, isAutomaticDosingAllowed: true),
+                                               preventIssuanceBeforePlayback: false)
+
+        openLoopAlertManager.loopDidComplete()
+        XCTAssertEqual(0, UserDefaults.appGroup?.loopNotRunningNotifications.count)
+    }
+
+    func testLoopNotRunningWarningsScaleWithLoopInterval() {
+        UserDefaults.appGroup?.customLoopIntervalEnabled = true
+        UserDefaults.appGroup?.customLoopInterval = .minutes(15)
+        defer {
+            UserDefaults.appGroup?.customLoopIntervalEnabled = false
+            UserDefaults.appGroup?.customLoopInterval = LoopSettings.defaultCustomLoopInterval
+        }
+
+        alertManager.loopDidComplete()
+        XCTAssertEqual(4, UserDefaults.appGroup?.loopNotRunningNotifications.count)
+
+        // At a 15 minute interval the first warning is due after 60 rather than 20 minutes.
+        alertManager.getCurrentDate = { return Date().addingTimeInterval(.minutes(30)) }
+        alertManager.inferDeliveredLoopNotRunningNotifications()
+        XCTAssertEqual(4, UserDefaults.appGroup?.loopNotRunningNotifications.count)
+        XCTAssertNil(mockAlertStore.issuedAlert)
+
+        alertManager.getCurrentDate = { return Date().addingTimeInterval(.minutes(65)) }
+        alertManager.inferDeliveredLoopNotRunningNotifications()
+        XCTAssertEqual(3, UserDefaults.appGroup?.loopNotRunningNotifications.count)
+        XCTAssertNotNil(mockAlertStore.issuedAlert)
     }
 
     func testLoopFailureFor10MinutesDoesNotRecordAlert() {

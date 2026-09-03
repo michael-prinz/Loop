@@ -94,7 +94,7 @@ class SettingsManager {
 
     var loopSettings: LoopSettings {
         get {
-            return LoopSettings(
+            var settings = LoopSettings(
                 dosingEnabled: latestSettings.dosingEnabled,
                 glucoseTargetRangeSchedule: latestSettings.glucoseTargetRangeSchedule,
                 insulinSensitivitySchedule: latestSettings.insulinSensitivitySchedule,
@@ -110,6 +110,19 @@ class SettingsManager {
                 suspendThreshold: latestSettings.suspendThreshold,
                 automaticDosingStrategy: latestSettings.automaticDosingStrategy,
                 defaultRapidActingModel: latestSettings.defaultRapidActingModel?.presetForRapidActingInsulin)
+
+            // Not part of StoredSettings; see UserDefaults+Loop settings extension.
+            if let defaults = UserDefaults.appGroup {
+                settings.customLoopIntervalEnabled = defaults.customLoopIntervalEnabled
+                settings.customLoopInterval = defaults.customLoopInterval
+                settings.suppressPodCommunicationInBackground = defaults.suppressPodCommunicationInBackground
+                settings.glucoseDisplayUrgentLow = defaults.glucoseDisplayUrgentLow
+                settings.glucoseDisplayLow = defaults.glucoseDisplayLow
+                settings.glucoseDisplayHigh = defaults.glucoseDisplayHigh
+                settings.glucoseDisplayUrgentHigh = defaults.glucoseDisplayUrgentHigh
+            }
+
+            return settings
         }
     }
 
@@ -149,6 +162,18 @@ class SettingsManager {
 
         if case .success(let deviceToken) = remoteNotificationRegistrationResult {
             deviceTokenStr = deviceToken.hexadecimalString
+        }
+
+        // Must happen before the unchanged-settings early return below: these fields are not part of
+        // StoredSettings, so a change to them alone leaves `mergedSettings` identical.
+        if let newLoopSettings, let defaults = UserDefaults.appGroup {
+            defaults.customLoopIntervalEnabled = newLoopSettings.customLoopIntervalEnabled
+            defaults.customLoopInterval = newLoopSettings.customLoopInterval
+            defaults.suppressPodCommunicationInBackground = newLoopSettings.suppressPodCommunicationInBackground
+            defaults.glucoseDisplayUrgentLow = newLoopSettings.glucoseDisplayUrgentLow
+            defaults.glucoseDisplayLow = newLoopSettings.glucoseDisplayLow
+            defaults.glucoseDisplayHigh = newLoopSettings.glucoseDisplayHigh
+            defaults.glucoseDisplayUrgentHigh = newLoopSettings.glucoseDisplayUrgentHigh
         }
 
         let mergedSettings = mergeSettings(newLoopSettings: newLoopSettings, notificationSettings: notificationSettings, deviceToken: deviceTokenStr)

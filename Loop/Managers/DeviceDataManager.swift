@@ -47,6 +47,18 @@ final class DeviceDataManager {
 
     private var lastCGMLoopTrigger: Date = .distantPast
 
+    /// The time of the most recent pod communication performed by the throttled loop flow
+    /// (`completeLoopCycle` sync/refresh or a forced sync). Unlike `doseStore.lastAddedPumpData`, this is
+    /// not advanced by passive pump-manager reconciliation, so the custom loop interval elapses reliably
+    /// and a required automatic dose is not perpetually deferred.
+    private var lastThrottledPodCommunication: Date = .distantPast
+
+    /// Tracks whether the one-time immediate loop has already fired for the current closed-loop activation.
+    private var closedLoopImmediateLoopTriggered = false
+
+    /// Tracks whether the app is currently backgrounded, so that pump communication can be suppressed while in open loop.
+    private var isAppInBackground = false
+
     private let automaticDosingStatus: AutomaticDosingStatus
 
     var closedLoopDisallowedLocalizedDescription: String? {
@@ -558,22 +570,117 @@ final class DeviceDataManager {
 
         return Manager.init(rawState: rawState) as? PumpManagerUI
     }
-    
-    private func checkPumpDataAndLoop() {
+
+    func closedLoopActivationDidChange(_ enabled: Bool) {
+        queue.async {
+            if !enabled {
+                self.closedLoopImmediateLoopTriggered = false
+                return
+            }
+
+            guard !self.closedLoopImmediateLoopTriggered else {
+                return
+            }
+
+            self.closedLoopImmediateLoopTriggered = true
+            let now = Date()
+            self.log.default("Closed loop enabled; triggering immediate loop and resetting loop cadence timer")
+            self.lastCGMLoopTrigger = now
+            self.checkPumpDataAndLoop(forcePumpSync: true)
+        }
+    }
+
+    /// Runs a loop cycle and decides what pod communication (if any) it warrants.
+    ///
+    /// The loop calculation runs on every cycle. Pump communication, however, is rate-limited by the custom
+    /// loop interval and can be suppressed in the background, so it is only performed when actually needed:
+    ///
+    /// 1. A tolerant compute pass determines whether an automatic dose is required (closed loop only).
+    /// 2. If a dose is required and the interval has elapsed, pump data is synced and the dose is enacted.
+    ///    This is never blocked by background suppression.
+    /// 3. Otherwise pump data is refreshed for freshness only when the interval has elapsed and background
+    ///    communication is not suppressed.
+    /// 4. When neither applies the pod is left alone ("no dose, no sync").
+    ///
+    /// - Parameter forcePumpSync: When `true` (e.g. the user just enabled closed loop) the interval and
+    ///   background rules are bypassed: pump data is synced immediately and a dose is enacted.
+    private func checkPumpDataAndLoop(forcePumpSync: Bool = false) {
         guard !crashRecoveryManager.pendingCrashRecovery else {
             self.log.default("Loop paused pending crash recovery acknowledgement.")
             return
         }
 
-        self.log.default("Asserting current pump data")
-        guard let pumpManager = pumpManager else {
-            // Run loop, even if pump is missing, to ensure stored dosing decision
-            self.loopManager.loop()
+        if forcePumpSync {
+            guard let pumpManager = pumpManager else {
+                self.loopManager.loop(enactingAutomaticDose: true)
+                return
+            }
+            self.log.default("Forcing pump sync; pump data is %{public}.0f s old", Date().timeIntervalSince(doseStore.lastAddedPumpData))
+            pumpManager.ensureCurrentPumpData { lastSync in
+                self.recordPodCommunicationAndLoop(lastSync: lastSync, enactingAutomaticDose: true)
+            }
             return
         }
 
-        pumpManager.ensureCurrentPumpData() { (lastSync) in
-            self.loopManager.loop()
+        // Open loop never enacts, so no dose can be required; skip the compute pass.
+        guard automaticDosingStatus.automaticDosingEnabled else {
+            self.completeLoopCycle(doseRequired: false)
+            return
+        }
+
+        // Compute pass: learn whether a dose is required without contacting the pump. This tolerates stale
+        // pump data, so a needed dose is detected even during a long custom loop interval.
+        loopManager.isAutomaticDoseRecommended { doseRequired in
+            self.queue.async {
+                self.completeLoopCycle(doseRequired: doseRequired)
+            }
+        }
+    }
+
+    /// Performs the pod communication decided by `checkPumpDataAndLoop` and runs the loop for this cycle.
+    private func completeLoopCycle(doseRequired: Bool) {
+        dispatchPrecondition(condition: .onQueue(queue))
+
+        let intervalElapsed = isPodCommunicationIntervalElapsed
+        let backgroundSuppressed = isAppInBackground && loopManager.settings.suppressPodCommunicationInBackground
+
+        // A required dose is synced then enacted, but only once the interval allows it. This is never
+        // blocked by the background suppression switch.
+        if doseRequired, intervalElapsed, let pumpManager = pumpManager {
+            self.log.default("Automatic dose required; syncing pump data then enacting. Pump data is %{public}.0f s old", Date().timeIntervalSince(doseStore.lastAddedPumpData))
+            pumpManager.ensureCurrentPumpData { lastSync in
+                self.recordPodCommunicationAndLoop(lastSync: lastSync, enactingAutomaticDose: true)
+            }
+            return
+        }
+
+        // Routine freshness: refresh only when the interval allows and background comms are not suppressed.
+        // `ensureCurrentPumpData` is a no-op when pump data is already fresh.
+        if intervalElapsed, !backgroundSuppressed, let pumpManager = pumpManager, pumpManager.isOnboarded {
+            self.log.default("Refreshing pump data for freshness; pump data is %{public}.0f s old", Date().timeIntervalSince(doseStore.lastAddedPumpData))
+            pumpManager.ensureCurrentPumpData { lastSync in
+                self.recordPodCommunicationAndLoop(lastSync: lastSync, enactingAutomaticDose: false)
+            }
+            return
+        }
+
+        if doseRequired {
+            self.log.default("Automatic dose deferred to the next communication interval")
+        } else {
+            self.log.default("No pump communication warranted this cycle; running loop for display only")
+        }
+        self.loopManager.loop(enactingAutomaticDose: false)
+    }
+
+    /// Records a throttled pod communication and then runs the loop. The custom-loop-interval clock is
+    /// advanced only on a successful `lastSync`, so a failed sync is retried on the next cycle instead of
+    /// being throttled away.
+    private func recordPodCommunicationAndLoop(lastSync: Date?, enactingAutomaticDose: Bool) {
+        queue.async {
+            if lastSync != nil {
+                self.lastThrottledPodCommunication = Date()
+            }
+            self.loopManager.loop(enactingAutomaticDose: enactingAutomaticDose)
         }
     }
 
@@ -926,7 +1033,64 @@ extension DeviceDataManager {
     }
 
     func didBecomeActive() {
+        queue.async {
+            self.isAppInBackground = false
+        }
         updatePumpManagerBLEHeartbeatPreference()
+        // The pump manager refreshes its own status when its HUD becomes visible, so no forced sync here.
+        refreshDeviceData()
+    }
+
+    func didEnterBackground() {
+        queue.async {
+            self.isAppInBackground = true
+        }
+    }
+
+    /// The minimum interval between loop cycles triggered by new CGM data. The loop cycle is never throttled
+    /// beyond the CGM cadence; only pump communication — including enacting doses — honors the custom loop
+    /// interval.
+    private var loopTriggerInterval: TimeInterval { .minutes(4.2) }
+
+    /// The custom loop interval reduced by a small buffer so a sync reliably happens on the cycle at/after
+    /// the target interval. Only meaningful when `customLoopIntervalEnabled` is `true`.
+    private func podCommunicationInterval(for settings: LoopSettings) -> TimeInterval {
+        LoopSettings.clampedCustomLoopInterval(settings.customLoopInterval) - .minutes(1)
+    }
+
+    /// Minimum age of stored pump data before a background pump sync is performed, or `nil` when background
+    /// pump communication is suppressed entirely.
+    private var pumpDataRefreshInterval: TimeInterval? {
+        // In open loop nothing is enacted, so the pump is left alone until the user interacts with it.
+        guard automaticDosingStatus.automaticDosingEnabled else {
+            return nil
+        }
+
+        let settings = loopManager.settings
+        guard settings.customLoopIntervalEnabled else {
+            return 0
+        }
+        return podCommunicationInterval(for: settings)
+    }
+
+    /// Whether stored pump data is old enough that a background sync is due.
+    private var isPumpDataRefreshDue: Bool {
+        guard let interval = pumpDataRefreshInterval else {
+            return false
+        }
+        return Date().timeIntervalSince(doseStore.lastAddedPumpData) >= interval
+    }
+
+    /// Whether enough time has elapsed since the last stored pump data to permit another pod communication
+    /// under the custom loop interval. This is the primary rate limit on pod communication (including
+    /// enacting doses) and applies uniformly in open and closed loop. With the custom interval disabled the
+    /// loop cadence is the only limit, so this is always `true`.
+    private var isPodCommunicationIntervalElapsed: Bool {
+        let settings = loopManager.settings
+        guard settings.customLoopIntervalEnabled else {
+            return true
+        }
+        return Date().timeIntervalSince(lastThrottledPodCommunication) >= podCommunicationInterval(for: settings)
     }
 
     func updatePumpManagerBLEHeartbeatPreference() {
@@ -1013,7 +1177,7 @@ extension DeviceDataManager: CGMManagerDelegate {
         log.default("CGMManager:%{public}@ did update with %{public}@", String(describing: type(of: manager)), String(describing: readingResult))
         processCGMReadingResult(manager, readingResult: readingResult) {
             let now = Date()
-            if case .newData = readingResult, now.timeIntervalSince(self.lastCGMLoopTrigger) > .minutes(4.2) {
+            if case .newData = readingResult, now.timeIntervalSince(self.lastCGMLoopTrigger) > self.loopTriggerInterval {
                 self.log.default("Triggering loop from new CGM data at %{public}@", String(describing: now))
                 self.lastCGMLoopTrigger = now
                 self.checkPumpDataAndLoop()
@@ -1101,7 +1265,7 @@ extension DeviceDataManager: PumpManagerDelegate {
         refreshCGM()
     }
     
-    private func refreshCGM(_ completion: (() -> Void)? = nil) {        
+    private func refreshCGM(_ completion: (() -> Void)? = nil) {
         guard let cgmManager = cgmManager else {
             completion?()
             return
@@ -1114,7 +1278,7 @@ extension DeviceDataManager: PumpManagerDelegate {
 
             self.queue.async {
                 self.processCGMReadingResult(cgmManager, readingResult: result) {
-                    if self.loopManager.lastLoopCompleted == nil || self.loopManager.lastLoopCompleted!.timeIntervalSinceNow < -.minutes(4.2) {
+                    if self.loopManager.lastLoopCompleted == nil || self.loopManager.lastLoopCompleted!.timeIntervalSinceNow < -self.loopTriggerInterval {
                         self.log.default("Triggering Loop from refreshCGM()")
                         self.checkPumpDataAndLoop()
                     }
@@ -1124,9 +1288,14 @@ extension DeviceDataManager: PumpManagerDelegate {
         }
     }
     
-    func refreshDeviceData() {
-        refreshCGM() {
+    /// Refreshes CGM data and runs a loop cycle. Pump data is only synced when it is older than
+    /// `pumpDataRefreshInterval`, or when `forcePumpSync` is set for an explicit user request.
+    func refreshDeviceData(forcePumpSync: Bool = false) {
+        refreshCGM {
             self.queue.async {
+                guard forcePumpSync || self.isPumpDataRefreshDue else {
+                    return
+                }
                 guard let pumpManager = self.pumpManager, pumpManager.isOnboarded else {
                     return
                 }
@@ -1282,7 +1451,7 @@ extension DeviceDataManager: PumpManagerOnboardingDelegate {
         log.default("Pump manager with identifier '%{public}@' onboarded", pumpManager.pluginIdentifier)
 
         DispatchQueue.main.async {
-            self.refreshDeviceData()
+            self.refreshDeviceData(forcePumpSync: true)
             self.settingsManager.storeSettings()
         }
     }

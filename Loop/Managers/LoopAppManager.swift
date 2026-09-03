@@ -184,7 +184,8 @@ class LoopAppManager: NSObject {
                                     userNotificationAlertScheduler: UserNotificationAlertScheduler(userNotificationCenter: UNUserNotificationCenter.current()),
                                     expireAfter: Bundle.main.localCacheDuration,
                                     bluetoothProvider: bluetoothStateManager,
-                                    analyticsServicesManager: analyticsServicesManager)
+                                    analyticsServicesManager: analyticsServicesManager,
+                                    automaticDosingStatus: automaticDosingStatus)
 
         alertPermissionsChecker = AlertPermissionsChecker()
         alertPermissionsChecker.delegate = alertManager
@@ -335,6 +336,10 @@ class LoopAppManager: NSObject {
         
         widgetLog.default("Refreshing widget. Reason: App didBecomeActive")
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    func didEnterBackground() {
+        deviceDataManager?.didEnterBackground()
     }
 
     // MARK: - Remote Notification

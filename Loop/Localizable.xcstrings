@@ -142,7 +142,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : " Voreinstellung zum Essen"
+            "value" : " Voreinstellung „Vor dem Essen“"
           }
         },
         "es" : {
@@ -421,7 +421,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : " Zielbereichsänderung"
+            "value" : " Trainingsvoreinstellung"
           }
         },
         "es" : {
@@ -1201,7 +1201,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@%2$@ konnte Deine aktuelle temporäre Basalrate nicht abbrechen, da diese höher ist als die neue maximale Basalrate, die Du festgelegt hast. Dies kann zu einer höheren Insulinabgabe, als erwünscht führen.\n\nErwäge, die Insulinabgabe manuell zu unterbrechen und dann sofort wieder aufzunehmen, um die Basalabgabe mit dem neuen Grenzwert zu initiieren."
+            "value" : "%1$@%2$@ konnte Deine aktuelle temporäre Basalrate nicht abbrechen, da diese höher ist als die neue maximale Basalrate, die Du festgelegt hast. Dies kann zu einer höheren Insulinabgabe als erwünscht führen.\n\nErwäge, die Insulinabgabe manuell zu unterbrechen und dann sofort wieder aufzunehmen, um die Basalabgabe mit dem neuen Grenzwert zu initiieren."
           }
         },
         "es" : {
@@ -1830,6 +1830,12 @@
             "value" : "%1$@ APP LYDE"
           }
         },
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ APP-TÖNE"
+          }
+        },
         "it" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1945,7 +1951,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ kann die Benachrichtigung nicht von Deinem Gerät löschen"
+            "value" : "%1$@ kann den Alarm nicht von Deinem Gerät löschen"
           }
         },
         "es" : {
@@ -2816,7 +2822,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$@ funktioniert in %2$@ nicht mehr. Sie müssen vorher einen Neuaufbau durchführen."
+            "value" : "%1$@ funktioniert in %2$@ nicht mehr. Du musst vorher einen Neuaufbau durchführen."
           }
         },
         "fr" : {
@@ -3987,7 +3993,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Eine neue Version von %@ ist verfügbar und es wird empfohlen, die App weiterhin zu verwenden."
+            "value" : "Eine neue Version von %@ ist verfügbar und wird empfohlen, um die App weiterhin zu verwenden."
           }
         },
         "es" : {
@@ -5366,6 +5372,12 @@
     "Add item to Lock Screen / CarPlay display" : {
       "comment" : "Title for Add item",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Element zur Sperrbildschirm-/CarPlay-Anzeige hinzufügen"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5837,7 +5849,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alarm-Einstellungen"
+            "value" : "Alarmeinstellungen"
           }
         },
         "es" : {
@@ -5920,7 +5932,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Benachrichtigungsberechtigungen"
+            "value" : "Alarmberechtigungen"
           }
         },
         "es" : {
@@ -6300,7 +6312,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alle Warnungen stummgeschaltet"
+            "value" : "Alle Alarme stummgeschaltet"
           }
         },
         "fr" : {
@@ -7584,7 +7596,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Möchtest Du wirklich alle protokollierten Dosis Einträge löschen?"
+            "value" : "Möchtest Du wirklich alle protokollierten Dosiseinträge löschen?"
           }
         },
         "es" : {
@@ -9047,7 +9059,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bluetooth-Aus Warnung"
+            "value" : "Alarm: Bluetooth aus"
           }
         },
         "es" : {
@@ -9136,7 +9148,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bluetooth nicht Verfügbar-Warnung"
+            "value" : "Alarm: Bluetooth nicht verfügbar"
           }
         },
         "es" : {
@@ -9522,7 +9534,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bolus Zusammenfassung"
+            "value" : "Bolus-Zusammenfassung"
           }
         },
         "es" : {
@@ -11260,7 +11272,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wechsel sofort die Pumpenbatterie"
+            "value" : "Wechsle sofort die Pumpenbatterie"
           }
         },
         "en" : {
@@ -11392,7 +11404,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wechsel jetzt das Pumpenreservoir"
+            "value" : "Wechsle jetzt das Pumpenreservoir"
           }
         },
         "en" : {
@@ -11888,7 +11900,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Überprüfe die Uhrzeit deines Geräts und/oder entferne alle ungültigen Daten aus Apple Health."
+            "value" : "Überprüfe die Uhrzeit Deines Geräts und/oder entferne alle ungültigen Daten aus Apple Health."
           }
         },
         "es" : {
@@ -11959,7 +11971,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wähle eine längere Resorptionsdauer für größere Mahlzeiten oder welche die viel Fett und Proteine beinhalten. Dies ist eine Unterstützung für den Algorithmus und muss nicht genau sein."
+            "value" : "Wähle eine längere Resorptionsdauer für größere Mahlzeiten oder für solche, die viel Fett und Eiweiß enthalten. Dies ist eine Unterstützung für den Algorithmus und muss nicht genau sein."
           }
         },
         "es" : {
@@ -13272,6 +13284,12 @@
     "Configure Display" : {
       "comment" : "Title for the view to configure the lock screen display",
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anzeige konfigurieren"
+          }
+        },
         "nl" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13296,6 +13314,12 @@
       "comment" : "A link that takes the user to a view where they can configure the display of the live activity screen on their lock screen and in CarPlay.",
       "isCommentAutoGenerated" : true,
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sperrbildschirm-/CarPlay-Zeile konfigurieren"
+          }
+        },
         "ro" : {
           "stringUnit" : {
             "state" : "translated",
@@ -13739,7 +13763,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kritische Warnungen"
+            "value" : "Dringliche Mitteilungen"
           }
         },
         "es" : {
@@ -16419,6 +16443,12 @@
       "comment" : "A section header in the live activity settings view, describing the control options for displaying glucose levels on the live activity screen.",
       "isCommentAutoGenerated" : true,
       "localizations" : {
+        "de" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Anzeigeoptionen"
+          }
+        },
         "fr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17474,7 +17504,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Glukosesicherheitsgrenze eingeben"
+            "value" : "Blutzucker-Sicherheitsgrenze eingeben"
           }
         },
         "es" : {
@@ -19122,7 +19152,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Behebe dies jetzt, indem Du Benachrichtigungen, kritische Alarme und zeitkritische Benachrichtigungen einschaltest."
+            "value" : "Behebe dies jetzt, indem Du Mitteilungen, Dringliche Mitteilungen und Zeitkritische Mitteilungen einschaltest."
           }
         },
         "es" : {
@@ -19437,7 +19467,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aus Sicherheitsgründen solltest Du kritische Warnungen, zeitkritische Warnungen und Benachrichtigungsberechtigungen (nicht kritische Warnungen) auf Deinem Gerät zulassen, um %1$@ weiterhin verwenden zu können."
+            "value" : "Aus Sicherheitsgründen solltest Du auf Deinem Gerät die Berechtigungen für Dringliche Mitteilungen, Zeitkritische Mitteilungen und Mitteilungen (nicht kritische Alarme) zulassen, um %1$@ weiterhin verwenden zu können; einzelne Alarme lassen sich nicht deaktivieren."
           }
         },
         "fr" : {
@@ -19572,7 +19602,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Prognostizierte Blutzucker"
+            "value" : "Prognostizierter Blutzucker"
           }
         },
         "es" : {
@@ -19649,7 +19679,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Häufig gestellte Fragen zu Benachrichtigungen"
+            "value" : "Häufig gestellte Fragen zu Alarmen"
           }
         },
         "fr" : {
@@ -19827,7 +19857,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Hol Dir Hilfe zu den Benachrichtigungsberechtigungen"
+            "value" : "Hol Dir Hilfe zu den Alarmberechtigungen"
           }
         },
         "es" : {
@@ -20035,7 +20065,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Teilweise Anwendung auf Glukosebasis"
+            "value" : "Glucose Based Partial Application"
           }
         },
         "fr" : {
@@ -20403,7 +20433,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Glukoseeffekt der Unterbrechung der Insulinabgabe"
+            "value" : "Blutzuckereffekt der Unterbrechung der Insulinabgabe"
           }
         },
         "fr" : {
@@ -20838,7 +20868,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wie kann ich nicht kritische Warnungen stummschalten?"
+            "value" : "Wie kann ich nicht kritische Alarme stummschalten?"
           }
         },
         "fr" : {
@@ -20890,7 +20920,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wie kann ich nur zeitkritische und nicht kritische Warnungen stummschalten?"
+            "value" : "Wie kann ich nur zeitkritische und nicht kritische Alarme stummschalten?"
           }
         },
         "fr" : {
@@ -21120,7 +21150,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wenn der iOS-Fokusmodus aktiviert und die Stummschaltung von Warnungen deaktiviert ist, werden kritische Warnungen weiterhin übermittelt und nicht kritische Warnungen stummgeschaltet, bis %1$@ jedem Fokusmodus als zulässige App hinzugefügt wird."
+            "value" : "Wenn der iOS-Fokusmodus aktiviert und die Stummschaltung von Alarmen deaktiviert ist, werden Dringliche Mitteilungen weiterhin übermittelt und nicht kritische Alarme stummgeschaltet, bis %1$@ jedem Fokusmodus als zulässige App hinzugefügt wird."
           }
         },
         "fr" : {
@@ -21250,7 +21280,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "In zukünftigen Versionen von Loop können sich diese Experimente ändern, als Standardbestandteile des Loop-Algorithmus enden oder vollständig aus Loop entfernt werden. Bitte folgen Sie dem Loop Zulip-Chat, um über mögliche Änderungen dieser Funktionen auf dem Laufenden zu bleiben."
+            "value" : "In zukünftigen Versionen von Loop können sich diese Experimente ändern, als Standardbestandteile des Loop-Algorithmus enden oder vollständig aus Loop entfernt werden. Bitte folge dem Loop Zulip-Chat, um über mögliche Änderungen dieser Funktionen auf dem Laufenden zu bleiben."
           }
         },
         "fr" : {
@@ -22369,7 +22399,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Insulinempfindlichkeit Plan"
+            "value" : "Zeitplan für die Insulinempfindlichkeit"
           }
         },
         "es" : {
@@ -22624,7 +22654,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Integrale retrospektive Korrektur"
+            "value" : "Integral Retrospective Correction"
           }
         },
         "fr" : {
@@ -23281,7 +23311,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kritische iOS-Warnungen und zeitkritische Warnungen sind Arten von Apple-Benachrichtigungen. Sie werden für Ereignisse mit hoher Priorität verwendet. Einige Beispiele:"
+            "value" : "Dringliche Mitteilungen und Zeitkritische Mitteilungen sind Arten von Apple-Mitteilungen. Sie werden für Ereignisse mit hoher Priorität verwendet. Einige Beispiele:"
           }
         },
         "fr" : {
@@ -23505,7 +23535,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Es sieht so aus, als ob du vergessen hast eine Mahlzeit einzugeben. Tippe um sie nun einzutragen."
+            "value" : "Es sieht so aus, als ob Du vergessen hast, eine Mahlzeit einzugeben. Tippe, um sie nun einzutragen."
           }
         },
         "fr" : {
@@ -23874,7 +23904,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Weniger als eine Minute verbleiben"
+            "value" : "Weniger als eine Minute verbleibt"
           }
         },
         "es" : {
@@ -24641,7 +24671,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Loop hat ein Problem mit Deinen Bluetooth-Einstellungen festgestellt und funktioniert nicht, bis Bluetooth aktiviert ist. Du erhältst keine Blutzucker-Werte und es kann kein Bolus abgeben werden."
+            "value" : "Loop hat ein Problem mit Deinen Bluetooth-Einstellungen festgestellt und funktioniert nicht, bis Bluetooth aktiviert ist. Du erhältst keine Blutzucker-Werte und es kann kein Bolus abgegeben werden."
           }
         },
         "es" : {
@@ -24920,7 +24950,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Loop verabreicht normalerweise 40% Deines voraussichtlichen Insulinbedarfs pro Dosierungszyklus. \n\nWenn das Experiment zur glukosebasierten partiellen Verabreichung aktiviert ist (Glucose Based Partial Application), variiert Loop den Prozentsatz des empfohlenen Bolus, der pro Zyklus verabreicht wird, je nach Glukosespiegel. \n\nNahe dem unterem Korrekturbereich werden 20% verwendet (ähnlich wie bei Temp Basal) und bei hohem Glukosespiegel (200 mg/dl, 11,1 mmol/l) schrittweise auf maximal 80% erhöht. \n\nBitte beachte, dass diese Funktion bei schnell ansteigendem Glukosespiegel, etwa nach einer unangekündigten Mahlzeit, in Kombination mit Geschwindigkeits- und retrospektiven Korrektureffekten zu einer höheren Dosis führen kann, als Dein ISF erfordern würde."
+            "value" : "Loop verabreicht normalerweise 40% Deines voraussichtlichen Insulinbedarfs pro Dosierungszyklus. \n\nWenn das Experiment zur glukosebasierten partiellen Verabreichung aktiviert ist (Glucose Based Partial Application), variiert Loop den Prozentsatz des empfohlenen Bolus, der pro Zyklus verabreicht wird, je nach Glukosespiegel. \n\nNahe dem unteren Korrekturbereich werden 20% verwendet (ähnlich wie bei Temp Basal) und bei hohem Glukosespiegel (200 mg/dl, 11,1 mmol/l) schrittweise auf maximal 80% erhöht. \n\nBitte beachte, dass diese Funktion bei schnell ansteigendem Glukosespiegel, etwa nach einer unangekündigten Mahlzeit, in Kombination mit Geschwindigkeits- und retrospektiven Korrektureffekten zu einer höheren Dosis führen kann, als Dein ISF erfordern würde."
           }
         },
         "fr" : {
@@ -25050,7 +25080,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Loop funktioniert nicht, bis Bluetooth aktiviert ist. Du erhältst keine Blutzuckerwerte und es kann kein Bolus abgeben werden."
+            "value" : "Loop funktioniert nicht, bis Bluetooth aktiviert ist. Du erhältst keine Blutzuckerwerte und es kann kein Bolus abgegeben werden."
           }
         },
         "es" : {
@@ -25388,7 +25418,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verwalten von Warnungen"
+            "value" : "Verwalten von Alarmen"
           }
         },
         "fr" : {
@@ -25524,7 +25554,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Maximale Basalte pro Stunde"
+            "value" : "Maximale Basalrate pro Stunde"
           }
         },
         "es" : {
@@ -26023,7 +26053,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verpasste Mahlzeit Benachrichtigung"
+            "value" : "Benachrichtigungen zu verpassten Mahlzeiten"
           }
         },
         "fr" : {
@@ -26765,7 +26795,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Alle Warnungen vorübergehend stummschalten"
+            "value" : "Alle Alarme vorübergehend stummschalten"
           }
         },
         "fr" : {
@@ -27301,7 +27331,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Bei Stummschaltung ertönen keine Warn- oder Alarmsignale. Wähle die Dauer der Stummschaltung aus."
+            "value" : "Bei Stummschaltung ertönen keine Alarme oder Gerätealarme. Wähle die Dauer der Stummschaltung aus."
           }
         },
         "fr" : {
@@ -27752,7 +27782,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kein aktueller Blutzucker "
+            "value" : "Kein aktueller Blutzucker"
           }
         },
         "es" : {
@@ -27847,7 +27877,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kein aktueller Blutzucker "
+            "value" : "Kein aktueller Blutzucker"
           }
         },
         "es" : {
@@ -28654,7 +28684,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Benachrichtigungen geben Dir wichtige %1$@ App-Informationen, ohne dass Du die App öffnen musst.\n\nLass diese in den Einstellungen Deines Telefons aktiviert, um sicherzustellen, dass Du %1$@ Benachrichtigungen, kritische Warnungen und zeitkritische Benachrichtigungen erhältst."
+            "value" : "Mitteilungen geben Dir wichtige %1$@ App-Informationen, ohne dass Du die App öffnen musst.\n\nLass diese in den Einstellungen Deines Telefons aktiviert, um sicherzustellen, dass Du %1$@ Mitteilungen, Dringliche Mitteilungen und Zeitkritische Mitteilungen erhältst."
           }
         },
         "es" : {
@@ -28838,7 +28868,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Oh nein! Loop ist während des Bolus abgestürzt und die Insulinanpassungen wurden angehalten, bis dieser Dialog geschlossen wird. Der Dosierung-Verlauf ist möglicherweise nicht korrekt. Bitte prüfe die Tabellen zur Insulinabgabe und überwache Deinen Blutzucker sorgfältig."
+            "value" : "Oh nein! Loop ist während der Dosierung abgestürzt und die Insulinanpassungen wurden angehalten, bis dieser Dialog geschlossen wird. Der Dosierungsverlauf ist möglicherweise nicht korrekt. Bitte prüfe die Tabellen zur Insulinabgabe und überwache Deinen Blutzucker sorgfältig."
           }
         },
         "es" : {
@@ -29505,7 +29535,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vorhergesagte Glukose um %1$@ ist %2$@."
+            "value" : "Vorhergesagter Blutzucker um %1$@ beträgt %2$@."
           }
         },
         "es" : {
@@ -29940,7 +29970,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vorhergesagt: %1$@\nAktuell: %2$@ (%3$@)"
+            "value" : "Vorhergesagt: %1$@\nTatsächlich: %2$@ (%3$@)"
           }
         },
         "es" : {
@@ -30119,7 +30149,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vorhergesagt: %1$@\nAktuell: %2$@ (%3$@)"
+            "value" : "Vorhergesagt: %1$@\nTatsächlich: %2$@ (%3$@)"
           }
         },
         "en" : {
@@ -33051,7 +33081,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nachträgliche Korrektur"
+            "value" : "Retrospektive Korrektur"
           }
         },
         "es" : {
@@ -35905,7 +35935,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tippe, um die Stummschaltung von Benachrichtigungen aufzuheben"
+            "value" : "Tippe, um die Stummschaltung von Alarmen aufzuheben"
           }
         },
         "fr" : {
@@ -35958,7 +35988,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Tippe auf Stummschaltung aufheben, um den Ton für Deine Warnungen und Alarme wieder aufzunehmen."
+            "value" : "Tippe auf Stummschaltung aufheben, um den Ton für Deine Alarme und Gerätealarme wieder aufzunehmen."
           }
         },
         "fr" : {
@@ -36902,7 +36932,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Die maximale Bolus beträgt %@ IE"
+            "value" : "Der maximale Bolus beträgt %@ IE"
           }
         },
         "en" : {
@@ -37205,7 +37235,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Dies ist die Entwicklungsversion von Loop, erstellt aus dem Dev-Branch. Aktualisierungen dieses Branchs können neue, ungetestete Funktionen enthalten und möglicherweise unsicher sein. Wenn du kein Tester bist, verwende diesen Zweig bitte nicht, sondern wechseln Sie zum main-Branch."
+            "value" : "Dies ist die Entwicklungsversion von Loop, erstellt aus dem Dev-Branch. Aktualisierungen dieses Branchs können neue, ungetestete Funktionen enthalten und möglicherweise unsicher sein. Wenn Du kein Tester bist, verwende diesen Branch bitte nicht, sondern wechsle zum main-Branch."
           }
         },
         "fr" : {
@@ -37298,7 +37328,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zeitkritische Warnungen"
+            "value" : "Zeitkritische Mitteilungen"
           }
         },
         "fr" : {
@@ -37351,7 +37381,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zeitkritische Benachrichtigungen"
+            "value" : "Zeitkritische Mitteilungen"
           }
         },
         "es" : {
@@ -37581,7 +37611,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Schalte die Lautstärke Deines iOS-Geräts aus oder fügen Sie %1$@ als zulässige App zu jedem Fokusmodus hinzu. Zeitkritische und kritische Warnungen ertönen weiterhin, nicht kritische Warnungen werden jedoch stummgeschaltet."
+            "value" : "Schalte die Lautstärke Deines iOS-Geräts aus oder füge %1$@ als zulässige App zu jedem Fokusmodus hinzu. Zeitkritische Mitteilungen und Dringliche Mitteilungen ertönen weiterhin, nicht kritische Alarme werden jedoch stummgeschaltet."
           }
         },
         "fr" : {
@@ -37634,7 +37664,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Schalte Bluetooth ein, um Warnungen, Alarme oder Gewebeglukosewerte zu erhalten."
+            "value" : "Schalte Bluetooth ein, um Alarme, Gerätealarme oder Gewebeglukosewerte zu erhalten."
           }
         },
         "es" : {
@@ -37848,7 +37878,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Benachrichtigung kann nicht gelöscht werden"
+            "value" : "Alarm kann nicht gelöscht werden"
           }
         },
         "es" : {
@@ -38109,7 +38139,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Manuelle Glukose-Eingaben kann nicht gespeichert werden"
+            "value" : "Manuelle Blutzucker-Eingabe kann nicht gespeichert werden"
           }
         },
         "es" : {
@@ -38198,7 +38228,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Der laufende Bolus kann nicht gestoppt werden. Bewegen Dein iPhone näher an die Pumpe und versuche es erneut. Überprüfe den Verlauf der Insulinabgabe auf Einzelheiten und überwache Deinen Blutzucker genau."
+            "value" : "Der laufende Bolus kann nicht gestoppt werden. Bewege Dein iPhone näher an die Pumpe und versuche es erneut. Überprüfe den Verlauf der Insulinabgabe auf Einzelheiten und überwache Deinen Blutzucker genau."
           }
         },
         "es" : {
@@ -38726,7 +38756,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Stummschaltung für Warnungen aufheben?"
+            "value" : "Stummschaltung für Alarme aufheben?"
           }
         },
         "fr" : {
@@ -39389,7 +39419,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Verwende die Funktion „Warnmeldungen stummschalten“. Damit kannst Du alle Deine Warnmeldungen und Alarme über die %1$@ App vorübergehend stummschalten, einschließlich kritischer und zeitkritischer Warnmeldungen."
+            "value" : "Verwende die Funktion „Alarme stummschalten“. Damit kannst Du alle Deine Alarme und Gerätealarme über die %1$@ App vorübergehend stummschalten, einschließlich Dringlicher Mitteilungen und Zeitkritischer Mitteilungen."
           }
         },
         "fr" : {
@@ -39882,7 +39912,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Was sind Beispiele für kritische und zeitkritische Warnungen?"
+            "value" : "Was sind Beispiele für Dringliche Mitteilungen und Zeitkritische Mitteilungen?"
           }
         },
         "fr" : {
@@ -39935,7 +39965,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Wenn der aktuelle oder prognostizierte Glukosewert unter dem Glukosesicherheitsgrenzwert liegt, empfiehlt Loop keinen Bolus und immer eine temporäre Basalrate von 0 Einheiten pro Stunde."
+            "value" : "Wenn der aktuelle oder prognostizierte Blutzucker unter der Blutzucker-Sicherheitsgrenze liegt, empfiehlt Loop keinen Bolus und immer eine temporäre Basalrate von 0 Einheiten pro Stunde."
           }
         },
         "es" : {
@@ -40321,7 +40351,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Während die Stummschaltung von Warnungen aktiviert ist, werden alle Warnungen Deiner %1$@ App, einschließlich kritischer und zeitkritischer Warnungen, vorübergehend ohne Ton und nur durch Vibration angezeigt."
+            "value" : "Während die Stummschaltung von Alarmen aktiviert ist, werden alle Alarme Deiner %1$@ App, einschließlich Dringlicher Mitteilungen und Zeitkritischer Mitteilungen, vorübergehend ohne Ton und nur durch Vibration angezeigt."
           }
         },
         "fr" : {
@@ -40373,7 +40403,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Während die Stummschaltung von Warnmeldungen aktiviert ist, können Deine Insulinpumpe und die CGM-Hardware weiterhin Töne abgeben."
+            "value" : "Während die Stummschaltung von Alarmen aktiviert ist, können Deine Insulinpumpe und die CGM-Hardware weiterhin Töne abgeben."
           }
         },
         "fr" : {
@@ -40432,7 +40462,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Beim Versuch %1$@ neu zu starten, ist ein Fehler aufgetreten. \n \n %2$@"
+            "value" : "Beim Versuch, %1$@ neu zu starten, ist ein Fehler aufgetreten.\n\n%2$@"
           }
         },
         "fr" : {
@@ -40604,7 +40634,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zielbereichsänderung ist seit mehr als 24 Stunden eingeschaltet. Stelle sicher, dass Du es weiterhin aktiviert haben möchtest, oder schalte es aus."
+            "value" : "Zielbereichsänderung ist seit mehr als 24 Stunden eingeschaltet. Stelle sicher, dass Du sie weiterhin aktiviert haben möchtest, oder schalte sie aus."
           }
         },
         "es" : {
@@ -40871,7 +40901,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Möglicherweise erhältst Du keine akustischen, optischen oder Vibrationswarnungen zu wichtigen Sicherheitsinformationen.\n\nUm das Problem zu beheben, tippe auf „Einstellungen“ und vergewissere Dich, dass „Benachrichtigungen“, „Dringende Warnungen“ und „Zeitkritische Benachrichtigungen“ aktiviert sind."
+            "value" : "Möglicherweise erhältst Du keine akustischen, optischen oder Vibrationsalarme zu wichtigen Sicherheitsinformationen.\n\nUm das Problem zu beheben, tippe auf „Einstellungen“ und vergewissere Dich, dass „Mitteilungen“, „Dringliche Mitteilungen“ und „Zeitkritische Mitteilungen“ aktiviert sind."
           }
         },
         "es" : {
@@ -40954,7 +40984,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Deine Zeit %1$@ wurde geändert. %2$@ benötigt genaue Zeitaufzeichnungen, um Vorhersagen über Deinen Blutzuckerwert zu treffen und Dein Insulin entsprechend anzupassen.\n\nÜberprüfe %1$@ Einstellungen (Allgemein / Datum & Uhrzeit) und vergewissere Dich, dass „Automatisch einstellen“ aktiviert ist. Wird dies nicht behoben, kann dies zu einer schwerwiegenden Unter- oder Über-Abgabe von Insulin führen."
+            "value" : "Die Zeit Deines %1$@ wurde geändert. %2$@ benötigt genaue Zeitaufzeichnungen, um Vorhersagen über Deinen Blutzuckerwert zu treffen und Dein Insulin entsprechend anzupassen.\n\nÜberprüfe die Einstellungen Deines %1$@ (Allgemein / Datum & Uhrzeit) und vergewissere Dich, dass „Automatisch einstellen“ aktiviert ist. Wird dies nicht behoben, kann dies zu einer schwerwiegenden Unter- oder Über-Abgabe von Insulin führen."
           }
         },
         "es" : {
@@ -41719,7 +41749,7 @@
         "de" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Der empfohlene Bolus übersteigt die maximale Bolus von %1$@."
+            "value" : "Der empfohlene Bolus übersteigt den maximalen Bolus von %1$@."
           }
         },
         "es" : {

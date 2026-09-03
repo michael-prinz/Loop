@@ -422,6 +422,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
 
         // This should be kept up to date immediately
         hudView?.loopCompletionHUD.lastLoopCompleted = deviceManager.loopManager.lastLoopCompleted
+        hudView?.loopCompletionHUD.loopInterval = deviceManager.loopManager.settings.effectiveLoopInterval
 
         guard !reloading && !deviceManager.authorizationRequired else {
             return
@@ -1677,6 +1678,10 @@ final class StatusTableViewController: LoopChartsTableViewController {
                                           initialDosingEnabled: deviceManager.loopManager.settings.dosingEnabled,
                                           isClosedLoopAllowed: automaticDosingStatus.$isAutomaticDosingAllowed,
                                           automaticDosingStrategy: deviceManager.loopManager.settings.automaticDosingStrategy,
+                                          initialCustomLoopIntervalEnabled: deviceManager.loopManager.settings.customLoopIntervalEnabled,
+                                          initialCustomLoopIntervalMinutes: deviceManager.loopManager.settings.customLoopInterval.minutes,
+                                          initialSuppressPodCommunicationInBackground: deviceManager.loopManager.settings.suppressPodCommunicationInBackground,
+                                          initialGlucoseDisplayRange: deviceManager.loopManager.settings.glucoseDisplayRange,
                                           availableSupports: supportManager.availableSupports,
                                           isOnboardingComplete: onboardingManager.isComplete,
                                           therapySettingsViewModelDelegate: deviceManager,
@@ -1742,6 +1747,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
             hudView.loopCompletionHUD.stateColors = .loopStatus
             hudView.loopCompletionHUD.loopIconClosed = automaticDosingStatus.automaticDosingEnabled
             hudView.loopCompletionHUD.lastLoopCompleted = deviceManager.loopManager.lastLoopCompleted
+            hudView.loopCompletionHUD.loopInterval = deviceManager.loopManager.settings.effectiveLoopInterval
 
             hudView.cgmStatusHUD.stateColors = .cgmStatus
             hudView.cgmStatusHUD.tintColor = .label
@@ -1812,7 +1818,7 @@ final class StatusTableViewController: LoopChartsTableViewController {
         if let error = error {
             let alertController = UIAlertController(with: error)
             let manualLoopAction = UIAlertAction(title: NSLocalizedString("Retry", comment: "The button text for attempting a manual loop"), style: .default, handler: { _ in
-                self.deviceManager.refreshDeviceData()
+                self.deviceManager.refreshDeviceData(forcePumpSync: true)
             })
             alertController.addAction(manualLoopAction)
             present(alertController, animated: true)
@@ -2269,11 +2275,37 @@ extension StatusTableViewController: SettingsViewModelDelegate {
         deviceManager.loopManager.mutateSettings { settings in
             settings.dosingEnabled = value
         }
+
+        deviceManager.closedLoopActivationDidChange(value)
     }
     
     func dosingStrategyChanged(_ strategy: AutomaticDosingStrategy) {
         self.deviceManager.loopManager.mutateSettings { settings in
             settings.automaticDosingStrategy = strategy
+        }
+    }
+
+    func customLoopIntervalEnabledChanged(_ enabled: Bool) {
+        deviceManager.loopManager.mutateSettings { settings in
+            settings.customLoopIntervalEnabled = enabled
+        }
+    }
+
+    func customLoopIntervalChanged(_ interval: TimeInterval) {
+        deviceManager.loopManager.mutateSettings { settings in
+            settings.customLoopInterval = LoopSettings.clampedCustomLoopInterval(interval)
+        }
+    }
+
+    func suppressPodCommunicationInBackgroundChanged(_ enabled: Bool) {
+        deviceManager.loopManager.mutateSettings { settings in
+            settings.suppressPodCommunicationInBackground = enabled
+        }
+    }
+
+    func glucoseDisplayRangeChanged(_ range: GlucoseDisplayRange) {
+        deviceManager.loopManager.mutateSettings { settings in
+            settings.glucoseDisplayRange = range
         }
     }
 

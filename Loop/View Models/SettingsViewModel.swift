@@ -52,6 +52,10 @@ public typealias PumpManagerViewModel = DeviceViewModel<PumpManagerDescriptor>
 public protocol SettingsViewModelDelegate: AnyObject {
     func dosingEnabledChanged(_: Bool)
     func dosingStrategyChanged(_: AutomaticDosingStrategy)
+    func customLoopIntervalEnabledChanged(_: Bool)
+    func customLoopIntervalChanged(_: TimeInterval)
+    func suppressPodCommunicationInBackgroundChanged(_: Bool)
+    func glucoseDisplayRangeChanged(_: GlucoseDisplayRange)
     func didTapIssueReport()
     var closedLoopDescriptiveText: String? { get }
 }
@@ -93,10 +97,46 @@ public class SettingsViewModel: ObservableObject {
         }
     }
 
-    var closedLoopPreference: Bool {
+    @Published var closedLoopPreference: Bool {
        didSet {
            delegate?.dosingEnabledChanged(closedLoopPreference)
        }
+    }
+
+    @Published var customLoopIntervalEnabled: Bool {
+        didSet {
+            delegate?.customLoopIntervalEnabledChanged(customLoopIntervalEnabled)
+        }
+    }
+
+    @Published var customLoopIntervalMinutes: Double {
+        didSet {
+            delegate?.customLoopIntervalChanged(TimeInterval(minutes: customLoopIntervalMinutes))
+        }
+    }
+
+    @Published var suppressPodCommunicationInBackground: Bool {
+        didSet {
+            delegate?.suppressPodCommunicationInBackgroundChanged(suppressPodCommunicationInBackground)
+        }
+    }
+
+    /// Smallest selectable custom loop interval, in minutes.
+    let minimumCustomLoopIntervalMinutes: Double = LoopSettings.minimumCustomLoopInterval.minutes
+
+    /// Largest selectable custom loop interval, in minutes.
+    let maximumCustomLoopIntervalMinutes: Double = LoopSettings.maximumCustomLoopInterval.minutes
+
+    /// Above this the loop can no longer keep pump data fresh between syncs while closed loop is on.
+    var customLoopIntervalExceedsRecencyLimit: Bool {
+        customLoopIntervalEnabled && TimeInterval(minutes: customLoopIntervalMinutes) > LoopSettings.customLoopIntervalWarningThreshold
+    }
+
+    /// Glucose display thresholds in mg/dL, ordered urgent low < low < high < urgent high.
+    @Published var glucoseDisplayRange: GlucoseDisplayRange {
+        didSet {
+            delegate?.glucoseDisplayRangeChanged(glucoseDisplayRange)
+        }
     }
 
     var showDeleteTestData: Bool {
@@ -117,6 +157,10 @@ public class SettingsViewModel: ObservableObject {
                 initialDosingEnabled: Bool,
                 isClosedLoopAllowed: Published<Bool>.Publisher,
                 automaticDosingStrategy: AutomaticDosingStrategy,
+                initialCustomLoopIntervalEnabled: Bool,
+                initialCustomLoopIntervalMinutes: Double,
+                initialSuppressPodCommunicationInBackground: Bool,
+                initialGlucoseDisplayRange: GlucoseDisplayRange,
                 availableSupports: [SupportUI],
                 isOnboardingComplete: Bool,
                 therapySettingsViewModelDelegate: TherapySettingsViewModelDelegate?,
@@ -134,6 +178,10 @@ public class SettingsViewModel: ObservableObject {
         self.closedLoopPreference = initialDosingEnabled
         self.isClosedLoopAllowed = false
         self.automaticDosingStrategy = automaticDosingStrategy
+        self.customLoopIntervalEnabled = initialCustomLoopIntervalEnabled
+        self.customLoopIntervalMinutes = initialCustomLoopIntervalMinutes
+        self.suppressPodCommunicationInBackground = initialSuppressPodCommunicationInBackground
+        self.glucoseDisplayRange = initialGlucoseDisplayRange
         self.availableSupports = availableSupports
         self.isOnboardingComplete = isOnboardingComplete
         self.therapySettingsViewModelDelegate = therapySettingsViewModelDelegate
@@ -182,6 +230,10 @@ extension SettingsViewModel {
                                  initialDosingEnabled: true,
                                  isClosedLoopAllowed: FakeClosedLoopAllowedPublisher().$mockIsClosedLoopAllowed,
                                  automaticDosingStrategy: .automaticBolus,
+                                 initialCustomLoopIntervalEnabled: false,
+                                 initialCustomLoopIntervalMinutes: LoopSettings.defaultCustomLoopInterval.minutes,
+                                 initialSuppressPodCommunicationInBackground: false,
+                                 initialGlucoseDisplayRange: GlucoseDisplayRange(),
                                  availableSupports: [],
                                  isOnboardingComplete: false,
                                  therapySettingsViewModelDelegate: nil,

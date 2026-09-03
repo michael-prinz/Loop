@@ -33,7 +33,12 @@ extension CLKComplicationTemplate {
             eventualGlucose: context.eventualGlucose,
             at: date,
             loopLastRunDate: context.loopLastRunDate,
+            loopInterval: context.loopInterval ?? LoopCompletionFreshness.defaultLoopInterval,
             recencyInterval: recencyInterval,
+            activeInsulin: context.activeInsulin,
+            activeCarbohydrates: context.activeCarbohydrates,
+            glucoseDisplayTier: context.glucoseDisplayTier,
+            eventualGlucoseDisplayTier: context.eventualGlucoseDisplayTier,
             chartGenerator: makeChart)
     }
 
@@ -46,7 +51,12 @@ extension CLKComplicationTemplate {
         eventualGlucose: HKQuantity?,
         at date: Date,
         loopLastRunDate: Date?,
+        loopInterval: TimeInterval = LoopCompletionFreshness.defaultLoopInterval,
         recencyInterval: TimeInterval,
+        activeInsulin: HKQuantity? = nil,
+        activeCarbohydrates: HKQuantity? = nil,
+        glucoseDisplayTier: GlucoseDisplayTier? = nil,
+        eventualGlucoseDisplayTier: GlucoseDisplayTier? = nil,
         chartGenerator makeChart: () -> UIImage?
     ) -> CLKComplicationTemplate? {
 
@@ -72,7 +82,7 @@ extension CLKComplicationTemplate {
             trendString = trend?.symbol ?? " "
         }
         
-        let loopCompletionFreshness = LoopCompletionFreshness(lastCompletion: loopLastRunDate, at: date)
+        let loopCompletionFreshness = LoopCompletionFreshness(lastCompletion: loopLastRunDate, at: date, loopInterval: loopInterval)
         
         let tintColor: UIColor
         
@@ -164,7 +174,12 @@ extension CLKComplicationTemplate {
                                                              eventualGlucose: eventualGlucose,
                                                              at: date,
                                                              loopLastRunDate: loopLastRunDate,
+                                                             loopInterval: loopInterval,
                                                              recencyInterval: recencyInterval,
+                                                             activeInsulin: activeInsulin,
+                                                             activeCarbohydrates: activeCarbohydrates,
+                                                             glucoseDisplayTier: glucoseDisplayTier,
+                                                             eventualGlucoseDisplayTier: eventualGlucoseDisplayTier,
                                                              chartGenerator: makeChart
                         ) as? CLKComplicationTemplateGraphicCircular
                 else {
@@ -177,7 +192,18 @@ extension CLKComplicationTemplate {
         case .graphicRectangular:
             if #available(watchOSApplicationExtension 5.0, *) {
                 return CLKComplicationTemplateGraphicRectangularLargeImage(
-                    textProvider: CLKTextProvider(byJoining: [glucoseAndTrendText, timeText], separator: " "),
+                    textProvider: rectangularTextProvider(glucoseAndTrend: glucoseAndTrend,
+                                                          glucoseString: glucoseString,
+                                                          accessibilityLabel: accessibilityStrings.joined(separator: ", "),
+                                                          glucoseDisplayTier: glucoseDisplayTier,
+                                                          eventualGlucose: eventualGlucose,
+                                                          eventualGlucoseDisplayTier: eventualGlucoseDisplayTier,
+                                                          unit: unit,
+                                                          formatter: formatter,
+                                                          activeInsulin: activeInsulin,
+                                                          activeCarbohydrates: activeCarbohydrates,
+                                                          freshnessColor: tintColor,
+                                                          fallbackTimeText: timeText),
                     imageProvider: CLKFullColorImageProvider(fullColorImage: makeChart() ?? UIImage())
                 )
             } else {
@@ -195,6 +221,85 @@ extension CLKComplicationTemplate {
             }
         @unknown default:
             return nil
+        }
+    }
+
+    private static var complicationInsulinFormatter: QuantityFormatter = {
+        let formatter = QuantityFormatter(for: .internationalUnit())
+        formatter.numberFormatter.minimumFractionDigits = 1
+        formatter.numberFormatter.maximumFractionDigits = 1
+        return formatter
+    }()
+
+    private static var complicationCarbFormatter: QuantityFormatter = {
+        let formatter = QuantityFormatter(for: .gram())
+        formatter.numberFormatter.maximumFractionDigits = 0
+        return formatter
+    }()
+
+    /// Per-segment tint colors survive on `.graphicRectangular` because `ComplicationController` deliberately
+    /// does not set a template-wide tint for that family.
+    private static func rectangularTextProvider(
+        glucoseAndTrend: String,
+        glucoseString: String,
+        accessibilityLabel: String,
+        glucoseDisplayTier: GlucoseDisplayTier?,
+        eventualGlucose: HKQuantity?,
+        eventualGlucoseDisplayTier: GlucoseDisplayTier?,
+        unit: HKUnit,
+        formatter: NumberFormatter,
+        activeInsulin: HKQuantity?,
+        activeCarbohydrates: HKQuantity?,
+        freshnessColor: UIColor,
+        fallbackTimeText: CLKTextProvider
+    ) -> CLKTextProvider {
+        let glucoseText = CLKSimpleTextProvider(text: glucoseAndTrend, shortText: glucoseString, accessibilityLabel: accessibilityLabel)
+        glucoseText.tintColor = glucoseDisplayTier?.complicationColor ?? freshnessColor
+
+        var providers: [CLKTextProvider] = [glucoseText]
+
+        // Without the eventual value there is nothing to show after the glucose, so keep the ticking "time ago" instead.
+        if let eventualGlucose, let eventualString = formatter.string(from: eventualGlucose.doubleValue(for: unit)) {
+            let eventualText = CLKSimpleTextProvider(text: eventualString)
+            eventualText.tintColor = eventualGlucoseDisplayTier?.complicationColor ?? freshnessColor
+            providers.append(eventualText)
+        } else {
+            providers.append(fallbackTimeText)
+        }
+
+        if let activeInsulin, let insulinString = compactString(from: activeInsulin, formatter: complicationInsulinFormatter) {
+            let insulinText = CLKSimpleTextProvider(text: insulinString)
+            insulinText.tintColor = .white
+            providers.append(insulinText)
+        }
+
+        if let activeCarbohydrates, let carbString = compactString(from: activeCarbohydrates, formatter: complicationCarbFormatter) {
+            let carbText = CLKSimpleTextProvider(text: carbString)
+            carbText.tintColor = .white
+            providers.append(carbText)
+        }
+
+        return CLKTextProvider(byJoining: providers, separator: " ")
+    }
+
+    /// Value and unit without the usual separating space, to save room on the complication.
+    private static func compactString(from quantity: HKQuantity, formatter: QuantityFormatter) -> String? {
+        guard let value = formatter.string(from: quantity, includeUnit: false) else {
+            return nil
+        }
+        return value + formatter.localizedUnitStringWithPlurality(forQuantity: quantity, avoidLineBreaking: false)
+    }
+}
+
+extension GlucoseDisplayTier {
+    var complicationColor: UIColor {
+        switch self {
+        case .inRange:
+            return .tintColor
+        case .outOfRange:
+            return .agingColor
+        case .urgent:
+            return .staleColor
         }
     }
 }

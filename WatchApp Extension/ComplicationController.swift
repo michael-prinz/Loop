@@ -123,11 +123,12 @@ final class ComplicationController: NSObject, CLKComplicationDataSource {
             ]
             
             if let loopLastRunDate = context.loopLastRunDate {
+                let loopInterval = context.loopInterval ?? LoopCompletionFreshness.defaultLoopInterval
                 let freshnessCategories = [
                     LoopCompletionFreshness.fresh,
                     LoopCompletionFreshness.aging,
                     LoopCompletionFreshness.stale
-                    ].compactMap( { $0.maxAge })
+                    ].compactMap( { $0.maxAge(for: loopInterval) })
                 futureChangeDates.append(contentsOf: freshnessCategories.map { loopLastRunDate + $0 + 1})
             }
             

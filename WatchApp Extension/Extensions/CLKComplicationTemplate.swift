@@ -253,21 +253,26 @@ extension CLKComplicationTemplate {
         freshnessColor: UIColor,
         fallbackTimeText: CLKTextProvider
     ) -> CLKTextProvider {
-        let glucoseText = CLKSimpleTextProvider(text: glucoseAndTrend, shortText: glucoseString, accessibilityLabel: accessibilityLabel)
-        glucoseText.tintColor = glucoseDisplayTier?.complicationColor ?? freshnessColor
+        let glucoseTint = glucoseDisplayTier?.complicationColor ?? freshnessColor
 
-        var providers: [CLKTextProvider] = [glucoseText]
+        var providers: [CLKTextProvider] = []
 
-        // Without the eventual value there is nothing to show after the glucose, so keep the ticking "time ago" instead.
         if let eventualGlucose, let eventualString = formatter.string(from: eventualGlucose.doubleValue(for: unit)) {
+            // Current and eventual joined tightly as "current->eventual"; each keeps its own tier color.
+            let currentText = CLKSimpleTextProvider(text: glucoseString, shortText: glucoseString, accessibilityLabel: accessibilityLabel)
+            currentText.tintColor = glucoseTint
             let eventualText = CLKSimpleTextProvider(text: eventualString)
             eventualText.tintColor = eventualGlucoseDisplayTier?.complicationColor ?? freshnessColor
-            providers.append(eventualText)
+            providers.append(CLKTextProvider(byJoining: [currentText, eventualText], separator: "->"))
         } else {
+            // Without an eventual value, keep the trend arrow and the ticking "time ago".
+            let glucoseText = CLKSimpleTextProvider(text: glucoseAndTrend, shortText: glucoseString, accessibilityLabel: accessibilityLabel)
+            glucoseText.tintColor = glucoseTint
+            providers.append(glucoseText)
             providers.append(fallbackTimeText)
         }
 
-        if let activeInsulin, let insulinString = compactString(from: activeInsulin, formatter: complicationInsulinFormatter) {
+        if let activeInsulin, let insulinString = compactString(from: activeInsulin, formatter: complicationInsulinFormatter, unit: "AI") {
             let insulinText = CLKSimpleTextProvider(text: insulinString)
             insulinText.tintColor = .white
             providers.append(insulinText)
@@ -280,15 +285,17 @@ extension CLKComplicationTemplate {
         }
 
         // Three spaces so the glucose / eventual / IOB / COB segments don't run together on the complication.
-        return CLKTextProvider(byJoining: providers, separator: "   ")
+        return CLKTextProvider(byJoining: providers, separator: "    ")
     }
 
-    /// Value and unit without the usual separating space, to save room on the complication.
-    private static func compactString(from quantity: HKQuantity, formatter: QuantityFormatter) -> String? {
+    /// Value and unit without the usual separating space, to save room on the complication. Pass `unit` to
+    /// override the localized unit label (e.g. "AI" for active insulin instead of "IE").
+    private static func compactString(from quantity: HKQuantity, formatter: QuantityFormatter, unit: String? = nil) -> String? {
         guard let value = formatter.string(from: quantity, includeUnit: false) else {
             return nil
         }
-        return value + formatter.localizedUnitStringWithPlurality(forQuantity: quantity, avoidLineBreaking: false)
+        let unitString = unit ?? formatter.localizedUnitStringWithPlurality(forQuantity: quantity, avoidLineBreaking: false)
+        return value + unitString
     }
 }
 

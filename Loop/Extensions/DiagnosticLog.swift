@@ -66,13 +66,51 @@ public class DiagnosticLog {
         sharedLogging.log(message, subsystem: subsystem, category: category, type: type, args)
     }
 
-    /// Best-effort rendering of an os_log format string plus its arguments for the in-app log. os_log
-    /// privacy qualifiers (e.g. "%{public}@") are stripped so `String(format:)` can render the message.
+    /// Best-effort, crash-safe rendering of an os_log format string plus its arguments for the in-app log.
+    /// Each format specifier is replaced by the next argument's description, so — unlike `String(format:)` —
+    /// a specifier/argument type or count mismatch can never crash (it only renders imperfectly).
     private static func renderMessage(_ message: StaticString, _ args: [CVarArg]) -> String {
         let format = message.description
         guard !args.isEmpty else { return format }
-        let sanitized = format.replacingOccurrences(of: "%\\{[^}]*\\}", with: "%", options: .regularExpression)
-        return String(format: sanitized, arguments: args)
+
+        let conversionCharacters = Set("@dDiuUxXoOfeEgGaAFcCsSp")
+        let characters = Array(format)
+        var result = ""
+        var argIndex = 0
+        var i = 0
+
+        while i < characters.count {
+            let character = characters[i]
+            guard character == "%" else {
+                result.append(character)
+                i += 1
+                continue
+            }
+
+            // Literal "%%".
+            if i + 1 < characters.count, characters[i + 1] == "%" {
+                result.append("%")
+                i += 2
+                continue
+            }
+
+            // Skip a privacy qualifier such as "{public}" / "{private}", then flags/width/length up to the
+            // conversion character.
+            var j = i + 1
+            if j < characters.count, characters[j] == "{" {
+                while j < characters.count, characters[j] != "}" { j += 1 }
+                if j < characters.count { j += 1 }
+            }
+            while j < characters.count, !conversionCharacters.contains(characters[j]) { j += 1 }
+
+            if argIndex < args.count {
+                result.append(String(describing: args[argIndex]))
+                argIndex += 1
+            }
+            i = j < characters.count ? j + 1 : j
+        }
+
+        return result
     }
 
 }

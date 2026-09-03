@@ -845,6 +845,8 @@ struct LogView: View {
                 .accessibilityLabel(Text(NSLocalizedString("Clear", comment: "Clear logs button accessibility label")))
             }
         }
+        // Keep the Settings sheet from swipe-dismissing while viewing logs; use the back button instead.
+        .interactiveDismissDisabled()
     }
 
     private var controlBar: some View {

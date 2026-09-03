@@ -258,12 +258,12 @@ extension CLKComplicationTemplate {
         var providers: [CLKTextProvider] = []
 
         if let eventualGlucose, let eventualString = formatter.string(from: eventualGlucose.doubleValue(for: unit)) {
-            // Current and eventual joined tightly as "current->eventual"; each keeps its own tier color.
-            let currentText = CLKSimpleTextProvider(text: glucoseString, shortText: glucoseString, accessibilityLabel: accessibilityLabel)
+            // Current (with trend arrow) and eventual joined tightly as "current<trend>eventual"; each keeps its own tier color.
+            let currentText = CLKSimpleTextProvider(text: glucoseAndTrend, shortText: glucoseString, accessibilityLabel: accessibilityLabel)
             currentText.tintColor = glucoseTint
             let eventualText = CLKSimpleTextProvider(text: eventualString)
             eventualText.tintColor = eventualGlucoseDisplayTier?.complicationColor ?? freshnessColor
-            providers.append(CLKTextProvider(byJoining: [currentText, eventualText], separator: "->"))
+            providers.append(CLKTextProvider(byJoining: [currentText, eventualText], separator: ""))
         } else {
             // Without an eventual value, keep the trend arrow and the ticking "time ago".
             let glucoseText = CLKSimpleTextProvider(text: glucoseAndTrend, shortText: glucoseString, accessibilityLabel: accessibilityLabel)

@@ -828,6 +828,8 @@ struct LogView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            enableBar
+            Divider()
             controlBar
             Divider()
             content
@@ -847,6 +849,25 @@ struct LogView: View {
         }
         // Keep the Settings sheet from swipe-dismissing while viewing logs; use the back button instead.
         .interactiveDismissDisabled()
+    }
+
+    private var enableBar: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Toggle(isOn: Binding(
+                get: { store.isCapturing },
+                set: { store.setCapturing($0) }
+            )) {
+                Text(NSLocalizedString("Enable logging", comment: "Toggle label to enable in-app log capture"))
+                    .font(.subheadline)
+            }
+            if !store.isCapturing {
+                Text(NSLocalizedString("Logging is off. New messages are not captured.", comment: "Hint shown in the log view when in-app log capture is disabled"))
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
     }
 
     private var controlBar: some View {

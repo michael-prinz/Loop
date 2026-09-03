@@ -58,7 +58,9 @@ public class DiagnosticLog {
             os_log(message, log: log, type: type, args)
         }
 
-        InAppLogStore.shared.record(type: type, category: category, message: DiagnosticLog.renderMessage(message, args))
+        if InAppLogStore.shared.isCapturing {
+            InAppLogStore.shared.record(type: type, category: category, message: DiagnosticLog.renderMessage(message, args))
+        }
 
         guard let sharedLogging = SharedLogging.instance else {
             return
@@ -175,12 +177,34 @@ final class InAppLogStore: ObservableObject {
     /// The largest number of entries retained, and the most the log view can display.
     static let maximumEntryCount = 500
 
+    /// UserDefaults key backing `isCapturing`.
+    private static let capturingDefaultsKey = "com.loopkit.Loop.inAppLogCaptureEnabled"
+
     private let lock = NSLock()
     private var storage: [InAppLogEntry] = []
     private var updateScheduled = false
+    private var capturing: Bool
 
     private init() {
+        // Disabled by default: no log line is captured until the user turns it on in the log view.
+        capturing = UserDefaults.standard.bool(forKey: Self.capturingDefaultsKey)
         storage.reserveCapacity(Self.maximumEntryCount)
+    }
+
+    /// Whether new log lines are captured into the buffer. Read from every logging thread, so it is
+    /// lock-guarded; when `false` the capture hook does no rendering or storage work at all.
+    var isCapturing: Bool {
+        lock.lock(); defer { lock.unlock() }
+        return capturing
+    }
+
+    /// Enables or disables log capture and persists the choice. Call from the main thread (the toggle).
+    func setCapturing(_ enabled: Bool) {
+        lock.lock()
+        capturing = enabled
+        lock.unlock()
+        UserDefaults.standard.set(enabled, forKey: Self.capturingDefaultsKey)
+        objectWillChange.send()
     }
 
     func record(date: Date = Date(), type: OSLogType, category: String, message: String) {

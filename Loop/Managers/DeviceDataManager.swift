@@ -623,8 +623,12 @@ final class DeviceDataManager {
         }
 
         // Open loop never enacts, so no dose can be required; skip the compute pass.
+        // Hop onto `queue` first: callers reach here from off-queue completions (e.g. CGM processing),
+        // and `completeLoopCycle` asserts it runs on `queue`.
         guard automaticDosingStatus.automaticDosingEnabled else {
-            self.completeLoopCycle(doseRequired: false)
+            self.queue.async {
+                self.completeLoopCycle(doseRequired: false)
+            }
             return
         }
 

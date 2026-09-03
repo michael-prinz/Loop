@@ -7,6 +7,8 @@
 //
 
 import os.log
+import Foundation
+import Combine
 
 public class DiagnosticLog {
 
@@ -56,10 +58,132 @@ public class DiagnosticLog {
             os_log(message, log: log, type: type, args)
         }
 
+        InAppLogStore.shared.record(type: type, category: category, message: DiagnosticLog.renderMessage(message, args))
+
         guard let sharedLogging = SharedLogging.instance else {
             return
         }
         sharedLogging.log(message, subsystem: subsystem, category: category, type: type, args)
     }
 
+    /// Best-effort rendering of an os_log format string plus its arguments for the in-app log. os_log
+    /// privacy qualifiers (e.g. "%{public}@") are stripped so `String(format:)` can render the message.
+    private static func renderMessage(_ message: StaticString, _ args: [CVarArg]) -> String {
+        let format = message.description
+        guard !args.isEmpty else { return format }
+        let sanitized = format.replacingOccurrences(of: "%\\{[^}]*\\}", with: "%", options: .regularExpression)
+        return String(format: sanitized, arguments: args)
+    }
+
+}
+
+// MARK: - In-app log buffer
+
+/// Severity of an in-app log entry, ordered least-to-most severe so the log view can filter by minimum level.
+enum InAppLogLevel: Int, Comparable, CaseIterable {
+    case debug = 0
+    case info = 1
+    case notice = 2
+    case error = 3
+    case fault = 4
+
+    init(_ type: OSLogType) {
+        switch type {
+        case .debug: self = .debug
+        case .info: self = .info
+        case .error: self = .error
+        case .fault: self = .fault
+        default: self = .notice
+        }
+    }
+
+    static func < (lhs: InAppLogLevel, rhs: InAppLogLevel) -> Bool { lhs.rawValue < rhs.rawValue }
+
+    var title: String {
+        switch self {
+        case .debug: return "Debug"
+        case .info: return "Info"
+        case .notice: return "Default"
+        case .error: return "Error"
+        case .fault: return "Fault"
+        }
+    }
+
+    var systemImageName: String {
+        switch self {
+        case .debug: return "ladybug"
+        case .info: return "info.circle"
+        case .notice: return "circle.fill"
+        case .error: return "exclamationmark.triangle.fill"
+        case .fault: return "xmark.octagon.fill"
+        }
+    }
+}
+
+/// A single captured log line shown in the in-app log view.
+struct InAppLogEntry: Identifiable {
+    let id = UUID()
+    let date: Date
+    let level: InAppLogLevel
+    let category: String
+    let message: String
+}
+
+/// A bounded, in-memory ring buffer of the most recent `DiagnosticLog` lines, surfaced by the in-app log
+/// view. It retains at most `maximumEntryCount` entries and never persists anything to disk.
+final class InAppLogStore: ObservableObject {
+    static let shared = InAppLogStore()
+
+    /// The largest number of entries retained, and the most the log view can display.
+    static let maximumEntryCount = 500
+
+    private let lock = NSLock()
+    private var storage: [InAppLogEntry] = []
+    private var updateScheduled = false
+
+    private init() {
+        storage.reserveCapacity(Self.maximumEntryCount)
+    }
+
+    func record(date: Date = Date(), type: OSLogType, category: String, message: String) {
+        let entry = InAppLogEntry(date: date, level: InAppLogLevel(type), category: category, message: message)
+
+        lock.lock()
+        storage.append(entry)
+        if storage.count > Self.maximumEntryCount {
+            storage.removeFirst(storage.count - Self.maximumEntryCount)
+        }
+        let alreadyScheduled = updateScheduled
+        updateScheduled = true
+        lock.unlock()
+
+        guard !alreadyScheduled else { return }
+        // Coalesce bursts of log lines into a single UI refresh on the main run loop.
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.lock.lock()
+            self.updateScheduled = false
+            self.lock.unlock()
+            self.objectWillChange.send()
+        }
+    }
+
+    /// A snapshot of all retained entries, oldest first.
+    func allEntries() -> [InAppLogEntry] {
+        lock.lock(); defer { lock.unlock() }
+        return storage
+    }
+
+    /// The distinct categories present in the buffer, sorted alphabetically.
+    func categories() -> [String] {
+        lock.lock(); defer { lock.unlock() }
+        return Set(storage.map { $0.category }).sorted()
+    }
+
+    func clear() {
+        lock.lock()
+        storage.removeAll(keepingCapacity: true)
+        lock.unlock()
+        objectWillChange.send()
+    }
 }

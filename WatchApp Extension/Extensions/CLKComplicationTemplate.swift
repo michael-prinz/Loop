@@ -279,7 +279,8 @@ extension CLKComplicationTemplate {
             providers.append(carbText)
         }
 
-        return CLKTextProvider(byJoining: providers, separator: " ")
+        // Three spaces so the glucose / eventual / IOB / COB segments don't run together on the complication.
+        return CLKTextProvider(byJoining: providers, separator: "   ")
     }
 
     /// Value and unit without the usual separating space, to save room on the complication.

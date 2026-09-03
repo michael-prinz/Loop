@@ -536,6 +536,10 @@ extension SettingsView {
             NavigationLink(destination: CriticalEventLogExportView(viewModel: viewModel.criticalEventLogExportViewModel)) {
                 Text(NSLocalizedString("Export Critical Event Logs", comment: "The title of the export critical event logs in support"))
             }
+
+            NavigationLink(destination: LogView()) {
+                Text(NSLocalizedString("View Logs", comment: "The title of the view logs item in the support section"))
+            }
         }
     }
     
@@ -802,6 +806,205 @@ struct PluginPopover: UIViewControllerRepresentable {
 
         func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
             onDismiss?()
+        }
+    }
+}
+
+struct LogView: View {
+    @ObservedObject private var store = InAppLogStore.shared
+
+    @State private var searchText = ""
+    @State private var displayLimit = 100
+    @State private var minimumLevel: InAppLogLevel = .debug
+    @State private var selectedCategory: String?
+
+    private static let countOptions = [10, 25, 50, 100, 250, 500]
+
+    private static let timeFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss.SSS"
+        return formatter
+    }()
+
+    var body: some View {
+        VStack(spacing: 0) {
+            controlBar
+            Divider()
+            content
+        }
+        .navigationTitle(Text(NSLocalizedString("Logs", comment: "Title of the in-app log view")))
+        .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $searchText, prompt: Text(NSLocalizedString("Search messages", comment: "Search field prompt in the log view")))
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    store.clear()
+                } label: {
+                    Image(systemName: "trash")
+                }
+                .accessibilityLabel(Text(NSLocalizedString("Clear", comment: "Clear logs button accessibility label")))
+            }
+        }
+    }
+
+    private var controlBar: some View {
+        HStack(spacing: 12) {
+            countMenu
+            Spacer(minLength: 0)
+            levelMenu
+            Spacer(minLength: 0)
+            categoryMenu
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+    }
+
+    private var countMenu: some View {
+        Menu {
+            ForEach(Self.countOptions, id: \.self) { count in
+                Button {
+                    displayLimit = count
+                } label: {
+                    let title = String(format: NSLocalizedString("Last %d", comment: "Log entry count option (1: number of entries)"), count)
+                    if displayLimit == count {
+                        Label(title, systemImage: "checkmark")
+                    } else {
+                        Text(title)
+                    }
+                }
+            }
+        } label: {
+            menuLabel(systemImage: "number", text: String(format: NSLocalizedString("Last %d", comment: "Log entry count option (1: number of entries)"), displayLimit))
+        }
+    }
+
+    private var levelMenu: some View {
+        Menu {
+            levelButton(NSLocalizedString("All levels", comment: "Log level filter option"), level: .debug)
+            levelButton(NSLocalizedString("Info & up", comment: "Log level filter option"), level: .info)
+            levelButton(NSLocalizedString("Default & up", comment: "Log level filter option"), level: .notice)
+            levelButton(NSLocalizedString("Errors only", comment: "Log level filter option"), level: .error)
+        } label: {
+            menuLabel(systemImage: "line.3.horizontal.decrease.circle", text: minimumLevel == .debug ? NSLocalizedString("All levels", comment: "Log level filter option") : minimumLevel.title)
+        }
+    }
+
+    private func levelButton(_ title: String, level: InAppLogLevel) -> some View {
+        Button {
+            minimumLevel = level
+        } label: {
+            if minimumLevel == level {
+                Label(title, systemImage: "checkmark")
+            } else {
+                Text(title)
+            }
+        }
+    }
+
+    private var categoryMenu: some View {
+        Menu {
+            Button {
+                selectedCategory = nil
+            } label: {
+                let title = NSLocalizedString("All categories", comment: "Category filter option")
+                if selectedCategory == nil {
+                    Label(title, systemImage: "checkmark")
+                } else {
+                    Text(title)
+                }
+            }
+            ForEach(store.categories(), id: \.self) { category in
+                Button {
+                    selectedCategory = category
+                } label: {
+                    if selectedCategory == category {
+                        Label(category, systemImage: "checkmark")
+                    } else {
+                        Text(category)
+                    }
+                }
+            }
+        } label: {
+            menuLabel(systemImage: "tag", text: selectedCategory ?? NSLocalizedString("All categories", comment: "Category filter option"))
+        }
+    }
+
+    private func menuLabel(systemImage: String, text: String) -> some View {
+        HStack(spacing: 4) {
+            Image(systemName: systemImage)
+            Text(text).lineLimit(1)
+            Image(systemName: "chevron.down").font(.caption2)
+        }
+        .font(.footnote)
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        let entries = filteredEntries
+        if entries.isEmpty {
+            VStack {
+                Spacer()
+                Text(NSLocalizedString("No log entries", comment: "Empty state for the log view"))
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            List(entries) { entry in
+                row(for: entry)
+            }
+            .listStyle(.plain)
+        }
+    }
+
+    private var filteredEntries: [InAppLogEntry] {
+        var entries = store.allEntries()
+        if let selectedCategory {
+            entries = entries.filter { $0.category == selectedCategory }
+        }
+        if minimumLevel != .debug {
+            entries = entries.filter { $0.level >= minimumLevel }
+        }
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !query.isEmpty {
+            entries = entries.filter {
+                $0.message.localizedCaseInsensitiveContains(query) || $0.category.localizedCaseInsensitiveContains(query)
+            }
+        }
+        // Show the most recent `displayLimit` entries, newest first.
+        return Array(entries.suffix(displayLimit).reversed())
+    }
+
+    private func row(for entry: InAppLogEntry) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 6) {
+                Image(systemName: entry.level.systemImageName)
+                    .font(.caption2)
+                    .foregroundColor(color(for: entry.level))
+                Text(entry.category)
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                Spacer()
+                Text(Self.timeFormatter.string(from: entry.date))
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .monospacedDigit()
+            }
+            Text(entry.message)
+                .font(.system(.footnote, design: .monospaced))
+                .fixedSize(horizontal: false, vertical: true)
+                .textSelection(.enabled)
+        }
+        .padding(.vertical, 2)
+    }
+
+    private func color(for level: InAppLogLevel) -> Color {
+        switch level {
+        case .debug: return .secondary
+        case .info: return .accentColor
+        case .notice: return .primary
+        case .error: return .orange
+        case .fault: return .red
         }
     }
 }

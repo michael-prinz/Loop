@@ -202,13 +202,13 @@ extension SettingsView {
     private var customLoopIntervalControls: some View {
         describedToggle(
             isOn: $viewModel.customLoopIntervalEnabled,
-            title: Text("Enable Custom Loop Interval", comment: "The title text for the custom loop interval switch cell"),
+            title: Text("Custom pod communication interval", comment: "The title text for the custom loop interval switch cell"),
             description: NSLocalizedString("When on, automatic pod communication is limited to at most once per the communication interval below. Off keeps the standard loop cadence.", comment: "The description text for the custom loop interval switch cell")
         )
 
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text("Communication Interval", comment: "The label for the pod communication interval picker")
+                Text("Pod communication interval", comment: "The label for the pod communication interval picker")
                 Spacer()
                 Text(String(format: NSLocalizedString("%d min", comment: "Custom loop interval value in minutes (1: number of minutes)"), Int(viewModel.customLoopIntervalMinutes.rounded())))
                     .foregroundColor(.secondary)
